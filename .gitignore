@@ -9,6 +9,10 @@
 
 # dependencies
 /node_modules
+/MdbSim
+/.vs
+/obj
+/bin
 
 # profiling files
 chrome-profiler-events*.json
