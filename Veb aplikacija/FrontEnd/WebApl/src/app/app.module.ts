@@ -3,18 +3,14 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { MainTableComponent } from './components/main-table/main-table.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
-    AppComponent,
-    MainTableComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    NgbModule.forRoot()
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]
