@@ -61,7 +61,7 @@ namespace ProcessingModule
 
 		private void AutomationWorker_DoWork()
 		{
-			List<PointIdentifier> points = new List<PointIdentifier>()
+			/*List<PointIdentifier> points = new List<PointIdentifier>()
 			{
 				new PointIdentifier(PointType.DIGITAL_OUTPUT, 1100),
 				new PointIdentifier(PointType.DIGITAL_INPUT, 1000),
@@ -84,7 +84,7 @@ namespace ProcessingModule
 				}
 
 				automationTrigger.WaitOne();
-			}
+			}*/
 		}
 
 		#region IDisposable Support
