@@ -5,6 +5,7 @@ import { AlarmType } from 'src/app/enumerations/alarm-type';
 import { PointType } from 'src/app/enumerations/point-type';
 import { DState } from 'src/app/enumerations/dState';
 import { AnalogOutput } from 'src/app/entities/analog-output';
+import { ConfigItem } from 'src/app/entities/config-item';
 //import { HostListener  } from "@angular/core";
 
 @Component({
@@ -45,7 +46,9 @@ export class MainTableComponent implements OnInit {
     point2.rawValue = 1500;
     point2.timestamp = new Date();
     point2.eguValue = 1500;
-    
+    point2.configItem = new ConfigItem();
+    point2.configItem.maxValue = 2000;
+    point2.configItem.minValue = 0;
     this.PointList.push(point2);
   }
 

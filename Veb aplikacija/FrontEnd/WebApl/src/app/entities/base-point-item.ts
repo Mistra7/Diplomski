@@ -1,5 +1,6 @@
 import {AlarmType} from 'src/app/enumerations/alarm-type';
 import {PointType} from 'src/app/enumerations/point-type';
+import { ConfigItem } from './config-item';
 
 export class BasePointItem {
     pointId: number;
@@ -10,6 +11,7 @@ export class BasePointItem {
     rawValue: number;
     commandedValue: number;
     alarm: AlarmType;
+    configItem: ConfigItem;
 
     constructor() {
         this.name = "";

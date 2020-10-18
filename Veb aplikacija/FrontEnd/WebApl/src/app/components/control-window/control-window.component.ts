@@ -5,6 +5,7 @@ import { DigitalBase } from 'src/app/entities/digital-base';
 import { DState } from 'src/app/enumerations/dState';
 import { FormsModule } from '@angular/forms';
 import { PointType } from 'src/app/enumerations/point-type';
+import { PointService } from 'src/app/services/point.service';
 
 @Component({
   selector: 'app-control-window',
@@ -15,7 +16,7 @@ export class ControlWindowComponent implements OnInit {
   @Input() point: BasePointItem = new BasePointItem();
   commandedValue = 0;
   isCommandedValueValid = true;
-  constructor() {
+  constructor(private pointService: PointService) {
   }
   
   ngOnInit(): void {
@@ -34,7 +35,14 @@ export class ControlWindowComponent implements OnInit {
   }
 
   writeCommand(){
-    console.log(this.commandedValue);
+    this.pointService.commandRegister(this.point.pointId, this.commandedValue).subscribe(
+      (res: any) => {
+        console.log(res);
+      },
+      err => {
+        alert(err.message);
+      }
+    )
   }
 
   valueChanged() {
@@ -47,8 +55,7 @@ export class ControlWindowComponent implements OnInit {
   }
 
   checkAnalogValue() {
-    //ubaciti da sa servera trazi min i maks vrijednost
-    if(this.commandedValue < 0 || this.commandedValue > 1000)
+    if(this.commandedValue < this.point.configItem.minValue || this.commandedValue > this.point.configItem.maxValue)
     {
       this.isCommandedValueValid = false;
     }
@@ -59,7 +66,6 @@ export class ControlWindowComponent implements OnInit {
   }
 
   checkDigitalValue() {
-    //ne treba traziti sa servera jer je za digitalne uvijek vrijednost ili 1 ili 0
     if(this.commandedValue != 0 && this.commandedValue != 1)
     {
       this.isCommandedValueValid = false;
@@ -72,7 +78,15 @@ export class ControlWindowComponent implements OnInit {
 
   readCommand()
   {
-
+    this.pointService.readRegister(this.point.pointId).subscribe(
+      (res : any) => {
+        console.log(res);
+      },
+      err => 
+      {
+        console.log(err);
+      }
+    )
   }
 
   

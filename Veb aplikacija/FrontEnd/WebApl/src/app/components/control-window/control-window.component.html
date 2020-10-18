@@ -18,7 +18,7 @@
                             <table>
                                 <tr>
                                     <td>Commanded Value:</td>
-                                    <td><input [class.borderColor]="!isCommandedValueValid" name="command" type="number" (change)="valueChanged()" [(ngModel)]="commandedValue"/></td>
+                                    <td><input [class.borderColor]="!isCommandedValueValid" name="command" type="number" (input)="valueChanged()" [(ngModel)]="commandedValue"/></td>
                                     <td><button [disabled]="!isCommandedValueValid" (click)="writeCommand()">Write</button></td>
                                 </tr>
                             </table>

@@ -6,7 +6,7 @@ using System.Windows.Threading;
 
 namespace dCom.ViewModel
 {
-    internal abstract class BasePointItem : ViewModelBase, IDataErrorInfo
+    internal abstract class BasePointItem : ViewModelBase, IDataErrorInfo, IPoint
 	{
 		protected PointType type;
 		protected ushort address;
