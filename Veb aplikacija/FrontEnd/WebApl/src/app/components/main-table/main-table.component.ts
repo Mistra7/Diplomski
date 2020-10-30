@@ -6,6 +6,7 @@ import { PointType } from 'src/app/enumerations/point-type';
 import { DState } from 'src/app/enumerations/dState';
 import { AnalogOutput } from 'src/app/entities/analog-output';
 import { ConfigItem } from 'src/app/entities/config-item';
+import { PointService } from 'src/app/services/point.service';
 //import { HostListener  } from "@angular/core";
 
 @Component({
@@ -22,35 +23,27 @@ export class MainTableComponent implements OnInit {
   PointList : Array<BasePointItem> = new Array<BasePointItem>();
   selectedRow = -1;
   selectedPoint : BasePointItem = new BasePointItem();
-  constructor() { }
+  connected = false;
+  constructor(private pointService: PointService) { }
 
   ngOnInit(): void {
-    var point = new DigitalInput();
-    point.address = 1000;
-    point.alarm = AlarmType.NO_ALARM;
-    point.type = PointType.DIGITAL_INPUT;
-    point.name = "Point";
-    point.pointId = 1;
-    point.rawValue = 0;
-    point.timestamp = new Date();
-    point.state = DState.OFF;
-
-    this.PointList.push(point);
-
-    var point2 = new AnalogOutput();
-    point2.address = 2000;
-    point2.alarm = AlarmType.NO_ALARM;
-    point2.type = PointType.ANALOG_OUTPUT;
-    point2.name = "Point2";
-    point2.pointId = 2;
-    point2.rawValue = 1500;
-    point2.timestamp = new Date();
-    point2.eguValue = 1500;
-    point2.configItem = new ConfigItem();
-    point2.configItem.maxValue = 2000;
-    point2.configItem.minValue = 0;
-    this.PointList.push(point2);
+    setInterval(() => {
+      if(!this.connected)
+      {
+        this.pointService.connectToDCom().subscribe(
+          (res : any) => {
+            console.log(res);
+            this.connected = true;
+          },
+          err => {
+            console.log(err);
+          }
+        )
+      }
+    }, 1000);
   }
+
+  
 
   stringyfiedStateOfPoint(state: DState): string {
     return DState[state];

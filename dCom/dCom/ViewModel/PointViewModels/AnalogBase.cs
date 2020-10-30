@@ -1,8 +1,10 @@
 ﻿using Common;
+using System;
+using System.Runtime.Serialization;
 
 namespace dCom.ViewModel
 {
-    internal abstract class AnalogBase : BasePointItem, IAnalogPoint 
+	internal abstract class AnalogBase : BasePointItem, IAnalogPoint 
 	{
 		private double eguValue;
 

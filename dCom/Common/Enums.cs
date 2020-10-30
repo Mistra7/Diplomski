@@ -1,8 +1,11 @@
-﻿namespace Common
+﻿using System;
+
+namespace Common
 {
     /// <summary>
     /// Digital states.
     /// </summary>
+	[Serializable]
 	public enum DState : short
 	{
 		OFF = 0,
@@ -22,9 +25,10 @@
 		WRITE_SINGLE_REGISTER = 0x06,
 	}
 
-    /// <summary>
-    /// Possible modbus point types.
-    /// </summary>
+	/// <summary>
+	/// Possible modbus point types.
+	/// </summary>
+	[Serializable]
 	public enum PointType : short
 	{
 		DIGITAL_OUTPUT = 0x01,
@@ -43,9 +47,10 @@
 		DISCONNECTED = 1,
 	}
 
-    /// <summary>
-    /// Alarm types.
-    /// </summary>
+	/// <summary>
+	/// Alarm types.
+	/// </summary>
+	[Serializable]
 	public enum AlarmType : short
 	{
 		NO_ALARM = 0x01,

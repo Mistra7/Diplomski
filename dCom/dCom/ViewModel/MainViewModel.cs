@@ -5,9 +5,12 @@ using ProcessingModule;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Threading;
+using WCFContract;
 
 namespace dCom.ViewModel
 {
@@ -28,6 +31,7 @@ namespace dCom.ViewModel
 		private string logText;
 		private StringBuilder logBuilder;
 		private DateTime currentTime;
+		private WCFServer server;
 		private IFunctionExecutor commandExecutor;
 		private IAutomationManager automationManager;
 		private bool timerThreadStopSignal = true;
@@ -109,6 +113,7 @@ namespace dCom.ViewModel
             this.processingManager = new ProcessingManager(this, commandExecutor);
 			this.acquisitor = new Acquisitor(acquisitionTrigger, this.processingManager, this, configuration);
 			this.automationManager = new AutomationManager(this, processingManager, automationTrigger, configuration);
+			this.server = new WCFServer(this, processingManager, configuration);
 			InitializePointCollection();
 			InitializeAndStartThreads();
 			logBuilder = new StringBuilder();
@@ -248,6 +253,11 @@ namespace dCom.ViewModel
 				}
 			}
 			return retVal;
+		}
+
+		public List<IPoint> GetAllPoints()
+		{
+			return pointsCache.Values.ToList();
 		}
 	}
 }

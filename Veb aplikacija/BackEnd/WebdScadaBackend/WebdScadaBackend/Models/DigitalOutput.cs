@@ -3,11 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WCFContract;
 
 namespace WebdScadaBackend.Models
 {
     internal class DigitalOutput : DigitalBase
     {
-        public DigitalOutput(IConfigItem c, int i) : base(c, i) { }
+        public DigitalOutput(PointData point) : base(point) { }
+        public DigitalOutput() { }
     }
 }

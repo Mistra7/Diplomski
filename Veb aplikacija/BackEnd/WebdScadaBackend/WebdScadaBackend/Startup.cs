@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using WCFContract;
+using Microsoft.EntityFrameworkCore;
 using WebdScadaBackend.Models;
 
 namespace WebdScadaBackend
@@ -33,6 +34,10 @@ namespace WebdScadaBackend
             services.Configure<ApplicationSettings>(Configuration.GetSection("ApplicationSettings"));
 
             services.AddMvc(option => option.EnableEndpointRouting = false).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            
+            services.AddDbContext<PointContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection"))
+            );
 
             services.AddCors();
 

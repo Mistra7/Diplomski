@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WCFContract;
 using WebdScadaBackend.Models;
 using WebdScadaBackend.WCFClasses;
 
@@ -18,10 +19,11 @@ namespace WebdScadaBackend.Controllers
     {
         private static Dictionary<int, BasePointItem> points = new Dictionary<int, BasePointItem>();
         private static WCFClient client = null;
+        private PointContext _dataBase;
 
-        public PointController()
+        public PointController(PointContext dataBase)
         {
-
+            this._dataBase = dataBase;
         }
 
         [HttpGet]
@@ -30,7 +32,7 @@ namespace WebdScadaBackend.Controllers
         {
             client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
 
-            List<IPoint> pointsList = null;
+            List<PointData> pointsList = null;
 
             pointsList = client.Connect();
 
@@ -40,9 +42,18 @@ namespace WebdScadaBackend.Controllers
             }
             else
             {
-                pointsList.ForEach(point => points.Add(point.PointId, point as BasePointItem));
-                return Ok(points.Values);
+                PutPointsInDataBase(pointsList);
+                return Ok(_dataBase.Points.ToArray());
             }
+        }
+
+        [HttpGet]
+        [Route("GetAllPoints")]
+        public async Task<Object> GetAllPoints()
+        {
+            var points = _dataBase.Points.ToList();
+
+            return points;
         }
 
         [HttpGet]
@@ -51,8 +62,31 @@ namespace WebdScadaBackend.Controllers
         {
             try
             {
-                IPoint point = client.ReadCommand(points[pid]);
-                points[pid] = point as BasePointItem;
+                var point = _dataBase.Points.Find(pid);
+                if (point == null)
+                    return BadRequest("Wrong point id");
+
+                try
+                {
+                    var newValue = client.ReadCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type });
+
+                    if(newValue == null)
+                        return NotFound("Read Command Failed");
+
+                    point.RawValue = newValue.RawValue;
+                    if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
+                        ((AnalogBase)point).EguValue = newValue.EguValue;
+                    else
+                        ((DigitalBase)point).State = newValue.State;
+
+                    _dataBase.SaveChanges();
+                }
+                catch
+                {
+                    return NotFound("ConnectionFailiure");
+                }
+
+                 
                 return Ok(point);
             }
             catch(Exception e)
@@ -67,10 +101,31 @@ namespace WebdScadaBackend.Controllers
         {
             try
             {
-                var conf = new ConfigItem();
-                var point1 = new AnalogOutput(conf, pid);
-                IPoint point = client.ReadCommand(point1);
-                points[pid] = point as BasePointItem;
+                var point = _dataBase.Points.Find(pid);
+                if (point == null)
+                    return BadRequest("Wrong point id");
+                
+
+                try
+                {
+                    var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, value);
+
+                    if (newValue == null)
+                        return NotFound("Read Command Failed");
+
+                    point.RawValue = newValue.RawValue;
+                    if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
+                        ((AnalogBase)point).EguValue = newValue.EguValue;
+                    else
+                        ((DigitalBase)point).State = newValue.State;
+
+                    _dataBase.SaveChanges();
+                }
+                catch
+                {
+                    return NotFound("ConnectionFailiure");
+                }
+
                 return Ok(point);
             }
             catch(Exception e)
@@ -79,26 +134,27 @@ namespace WebdScadaBackend.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("GetMinAndMaxValue")]
-        public async Task<Object> GetMinAndMaxValue(int pid)
+        private void PutPointsInDataBase(List<PointData> points)
         {
-            try
+            _dataBase.Points.RemoveRange(_dataBase.Points.ToArray());
+            
+            foreach(PointData point in points)
             {
-                //var minValue = points[pid].ConfigItem.MinValue;
-                //var maxValue = points[pid].ConfigItem.MaxValue;
-                var minValue = 0;
-                var maxValue = 1000;
-                return new
+                BasePointItem newPoint = null;
+
+                if(point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
                 {
-                    minValue,
-                    maxValue
-                };
+                    newPoint = point.Type == PointType.ANALOG_INPUT ? (BasePointItem)(new AnalogInput(point)) : (BasePointItem)(new AnalogOutput(point));
+                }
+                else if(point.Type == PointType.DIGITAL_INPUT || point.Type == PointType.DIGITAL_OUTPUT)
+                {
+                    newPoint = point.Type == PointType.DIGITAL_INPUT ? (BasePointItem)(new DigitalInput(point)) : (BasePointItem)(new DigitalOutput(point));
+                }
+
+                _dataBase.Points.Add(newPoint);
             }
-            catch(Exception e)
-            {
-                return Problem(e.Message);
-            }
+
+            _dataBase.SaveChanges();
         }
     }
 }

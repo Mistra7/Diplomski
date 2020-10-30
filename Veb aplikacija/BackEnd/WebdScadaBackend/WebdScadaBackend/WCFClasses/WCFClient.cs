@@ -17,9 +17,8 @@ namespace WebdScadaBackend.WCFClasses
             factory = this.CreateChannel();
         }
 
-        public List<IPoint> Connect()
+        public List<PointData> Connect()
         {
-            
             try
             {
                 return factory.Connect();
@@ -30,14 +29,28 @@ namespace WebdScadaBackend.WCFClasses
             }
         }
 
-        public IPoint ReadCommand(IPoint point)
+        public PointData ReadCommand(PointIdentifier point)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return factory.ReadCommand(point);
+            }
+            catch(Exception e)
+            {
+                return null;
+            }
         }
 
-        public IPoint WriteCommand(IPoint point, short value)
+        public PointData WriteCommand(PointIdentifier point, short value)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return factory.WriteCommand(point, value);
+            }
+            catch(Exception e)
+            {
+                return null;
+            }
         }
     }
 }

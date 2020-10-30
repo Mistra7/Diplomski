@@ -55,7 +55,7 @@ export class ControlWindowComponent implements OnInit {
   }
 
   checkAnalogValue() {
-    if(this.commandedValue < this.point.configItem.minValue || this.commandedValue > this.point.configItem.maxValue)
+    if(this.commandedValue < this.point.minValue || this.commandedValue > this.point.maxValue)
     {
       this.isCommandedValueValid = false;
     }

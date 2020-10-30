@@ -12,11 +12,11 @@ namespace WCFContract
     public interface IWCFContract
     {
         [OperationContract]
-        List<IPoint> Connect();
+        List<PointData> Connect();
         [OperationContract]
-        IPoint ReadCommand(IPoint point);
+        PointData ReadCommand(PointIdentifier point);
         [OperationContract]
-        IPoint WriteCommand(IPoint point, short value);
+        PointData WriteCommand(PointIdentifier point, short value);
         
     }
 }

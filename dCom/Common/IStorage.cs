@@ -29,5 +29,6 @@ namespace Common
         /// <param name="pointIds">The identifiers of the points that are requested.</param>
         /// <returns>The list of poitns read from the storage.</returns>
 		List<IPoint> GetPoints(List<PointIdentifier> pointIds);
+        List<IPoint> GetAllPoints();
 	}
 }

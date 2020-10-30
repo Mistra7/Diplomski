@@ -1,5 +1,6 @@
 ﻿using Common;
 using System;
+using System.Runtime.Serialization;
 
 namespace dCom.ViewModel
 {

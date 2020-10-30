@@ -299,6 +299,8 @@ namespace dCom.Configuration
 			Deviation = 0;
         }
 
+		public ConfigItem() { }
+
 		private PointType GetRegistryType(string registryTypeName)
 		{
 			PointType registryType;

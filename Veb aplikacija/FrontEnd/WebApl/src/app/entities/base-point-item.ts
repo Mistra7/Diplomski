@@ -11,7 +11,9 @@ export class BasePointItem {
     rawValue: number;
     commandedValue: number;
     alarm: AlarmType;
-    configItem: ConfigItem;
+    dataBaseId: number;
+    minValue: number;
+    maxValue: number;
 
     constructor() {
         this.name = "";

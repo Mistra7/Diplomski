@@ -1,9 +1,12 @@
 ﻿using Common;
+using System;
+using System.Runtime.Serialization;
 
 namespace dCom.ViewModel
 {
-    internal abstract class DigitalBase : BasePointItem, IDigitalPoint
+	internal abstract class DigitalBase : BasePointItem, IDigitalPoint
     {
+		
 		private DState state;
 
 		public DigitalBase(IConfigItem c, IProcessingManager processingManager, IStateUpdater stateUpdater, IConfiguration configuration, int i) 
