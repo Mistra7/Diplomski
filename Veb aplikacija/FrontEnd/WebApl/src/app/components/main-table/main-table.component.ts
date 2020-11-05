@@ -1,10 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { BasePointItem } from 'src/app/entities/base-point-item';
-import { DigitalInput } from 'src/app/entities/digital-input';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { BasePointItem, PointIdentifier } from 'src/app/entities/base-point-item';
 import { AlarmType } from 'src/app/enumerations/alarm-type';
 import { PointType } from 'src/app/enumerations/point-type';
 import { DState } from 'src/app/enumerations/dState';
-import { AnalogOutput } from 'src/app/entities/analog-output';
 import { ConfigItem } from 'src/app/entities/config-item';
 import { PointService } from 'src/app/services/point.service';
 //import { HostListener  } from "@angular/core";
@@ -21,29 +19,26 @@ export class MainTableComponent implements OnInit {
     console.log("Usao");
   }*/
   PointList : Array<BasePointItem> = new Array<BasePointItem>();
+  ConfigList : Array<ConfigItem> = new Array<ConfigItem>();
   selectedRow = -1;
   selectedPoint : BasePointItem = new BasePointItem();
+  @Output() notifyParent: EventEmitter<BasePointItem> = new EventEmitter<BasePointItem>();
   connected = false;
+  doAcqus = false;
+  connectionId;
+  acqusitionId;
   constructor(private pointService: PointService) { }
 
   ngOnInit(): void {
-    setInterval(() => {
-      if(!this.connected)
-      {
-        this.pointService.connectToDCom().subscribe(
-          (res : any) => {
-            console.log(res);
-            this.connected = true;
-          },
-          err => {
-            console.log(err);
-          }
-        )
-      }
+    this.connectionId = setInterval(() => {
+      this.connectToServer();
+    }, 5000);
+
+    this.acqusitionId = setInterval(() => {
+      this.doTheAcqusition();
     }, 1000);
   }
 
-  
 
   stringyfiedStateOfPoint(state: DState): string {
     return DState[state];
@@ -57,8 +52,9 @@ export class MainTableComponent implements OnInit {
     return AlarmType[alarm];
   }
 
-  dateFormatter(date: Date)
+  dateFormatter(date1: Date)
   {
+    var date = new Date(date1);
     return date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + date.getHours() + ":"
     + date.getMinutes() + ":" + date.getSeconds();
   }
@@ -72,5 +68,75 @@ export class MainTableComponent implements OnInit {
   openModal()
   {
     document.getElementById("openModalButton").click();
+  }
+
+  connectToServer(){
+    this.connected = JSON.parse(localStorage.getItem("connected"));
+    if(!this.connected)
+    {
+      this.pointService.connectToDCom().subscribe(
+        (res : any) => {
+          console.log(res);
+          
+          this.PointList = res.points as Array<BasePointItem>;
+          this.ConfigList = res.configItems as Array<ConfigItem>;
+          console.log(this.PointList);
+          this.connected = true;
+          localStorage.setItem("connected", JSON.stringify(this.connected));
+        },
+        err => {
+          console.log(err);
+        }
+      )
+    }
+  }
+
+  doTheAcqusition(){
+    this.doAcqus = JSON.parse(localStorage.getItem("doAcquisiton"));
+    var identifiers = new Array<number>();
+    if(this.doAcqus){
+      this.ConfigList.forEach(c => {
+        ++c.secondsPassedSinceLastPoll;
+        if(c.acquisitionInterval > 0 && c.secondsPassedSinceLastPoll >= c.acquisitionInterval){
+          identifiers.push(c.dataBaseId);
+          c.secondsPassedSinceLastPoll = 0;
+        }
+      });
+
+      if(identifiers.length > 0){
+        this.pointService.acqusitate(identifiers).subscribe(
+          (res: any) => {
+            var points = res as Array<BasePointItem>;
+            points.forEach(p => {
+              this.updatePoint(p);
+            })
+          },
+          err => {
+            alert(err);
+          }
+        )
+      }
+    }
+  }
+
+  getNotification(point: BasePointItem)
+  {
+    this.updatePoint(point);
+  }
+
+  updatePoint(point: BasePointItem)
+  {
+    this.PointList.forEach(p => {
+      if(p.dataBaseId == point.dataBaseId){
+        p.rawValue = point.rawValue;
+        if(p.type == PointType.ANALOG_INPUT || p.type == PointType.ANALOG_OUTPUT){
+          p.eguValue = point.eguValue;
+        }
+        else {
+          p.state = point.state;
+        }
+        this.notifyParent.emit(p);
+      }      
+    });
   }
 }

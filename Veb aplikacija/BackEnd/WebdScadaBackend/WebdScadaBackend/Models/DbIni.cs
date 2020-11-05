@@ -12,11 +12,6 @@ namespace WebdScadaBackend.Models
         public static void Initialize(PointContext pointContext)
         {
             pointContext.Database.EnsureCreated();
-            
-            if (pointContext.Points.Any())
-                return;
-
-            pointContext.SaveChanges();
         }
     }
 }

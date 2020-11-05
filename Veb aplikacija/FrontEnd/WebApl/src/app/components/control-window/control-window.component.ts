@@ -1,7 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { BasePointItem } from 'src/app/entities/base-point-item';
-import { AnalogBase } from 'src/app/entities/analog-base';
-import { DigitalBase } from 'src/app/entities/digital-base';
 import { DState } from 'src/app/enumerations/dState';
 import { FormsModule } from '@angular/forms';
 import { PointType } from 'src/app/enumerations/point-type';
@@ -14,6 +12,7 @@ import { PointService } from 'src/app/services/point.service';
 })
 export class ControlWindowComponent implements OnInit {
   @Input() point: BasePointItem = new BasePointItem();
+  @Output() notifyParent: EventEmitter<BasePointItem> = new EventEmitter();
   commandedValue = 0;
   isCommandedValueValid = true;
   constructor(private pointService: PointService) {
@@ -26,21 +25,23 @@ export class ControlWindowComponent implements OnInit {
   valueOfThePoint(point: BasePointItem) {
     if(point.type == 1 || point.type == 2)
     {
-      return DState[(point as DigitalBase).state];
+      return DState[point.state];
     }
     else
     {
-      return (point as AnalogBase).eguValue;
+      return (point.eguValue);
     }
   }
 
   writeCommand(){
-    this.pointService.commandRegister(this.point.pointId, this.commandedValue).subscribe(
+    this.pointService.commandRegister(this.point.dataBaseId, this.commandedValue).subscribe(
       (res: any) => {
-        console.log(res);
+        this.notifyParent.emit(res as BasePointItem);
+        this.commandedValue = 0;
       },
       err => {
         alert(err.message);
+        this.commandedValue = 0;
       }
     )
   }
@@ -78,13 +79,13 @@ export class ControlWindowComponent implements OnInit {
 
   readCommand()
   {
-    this.pointService.readRegister(this.point.pointId).subscribe(
+    this.pointService.readRegister(this.point.dataBaseId).subscribe(
       (res : any) => {
-        console.log(res);
+        this.notifyParent.emit(res as BasePointItem);
       },
       err => 
       {
-        console.log(err);
+        alert(err.message);
       }
     )
   }

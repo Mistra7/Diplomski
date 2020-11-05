@@ -6,6 +6,8 @@ namespace Common
     /// <summary>
     /// Structure representing the point identifier
     /// </summary>
+    
+    [Serializable]
     public struct PointIdentifier
     {
         public PointType PointType;
@@ -30,5 +32,7 @@ namespace Common
         /// <returns>The list of poitns read from the storage.</returns>
 		List<IPoint> GetPoints(List<PointIdentifier> pointIds);
         List<IPoint> GetAllPoints();
-	}
+        IPoint GetPoint(PointIdentifier pointId);
+        List<IPoint> GetPointsWithNewValues(List<PointIdentifier> pointIds);
+    }
 }

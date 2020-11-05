@@ -43,7 +43,7 @@ namespace dCom.ViewModel
 			this.processingManager = processingManager;
 			this.stateUpdater = stateUpdater;
 			this.configuration = configuration;
-
+			this.alarm = AlarmType.NO_ALARM;
 			this.type = c.RegistryType;
 			this.address = (ushort)(c.StartAddress+i);
 			this.name = $"{configItem.Description} [{i}]";

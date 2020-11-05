@@ -25,4 +25,4 @@
  </table>
  <button id="openModalButton" [hidden]="true" data-toggle="modal" data-target="#controlWindow"></button>
 
- <app-control-window  [point]="selectedPoint"></app-control-window>
+ <app-control-window (notifyParent)="getNotification($event)"  [point]="selectedPoint"></app-control-window>

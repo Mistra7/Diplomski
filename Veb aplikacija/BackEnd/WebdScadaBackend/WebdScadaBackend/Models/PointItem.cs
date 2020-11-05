@@ -9,9 +9,8 @@ using WCFContract;
 
 namespace WebdScadaBackend.Models
 {
-	public abstract class BasePointItem
+	public class PointItem
     {
-		
 		protected PointType type;
 		protected ushort address;
 		private DateTime timestamp = DateTime.Now;
@@ -23,10 +22,12 @@ namespace WebdScadaBackend.Models
 		private int dataBaseId;
 		private ushort minValue;
 		private ushort maxValue;
+		private double? eguValue;
+		private DState? state;
 
-		public BasePointItem() { }
+		public PointItem() { }
 
-		public BasePointItem(PointData point)
+		public PointItem(PointData point)
 		{
 			this.PointId = point.PointId;
 			this.Type = point.Type;
@@ -38,6 +39,8 @@ namespace WebdScadaBackend.Models
 			this.CommandedValue = point.CommandedValue;
 			this.MinValue = point.MinValue;
 			this.MaxValue = point.MaxValue;
+			this.EguValue = point.EguValue;
+			this.State = point.State;
 		}
 
 		public PointType Type { get => type; set => type = value; }
@@ -52,5 +55,7 @@ namespace WebdScadaBackend.Models
 		public int DataBaseId { get => dataBaseId; set => dataBaseId = value; }
 		public ushort MinValue { get => minValue; set => minValue = value; }
 		public ushort MaxValue { get => maxValue; set => maxValue = value; }
+		public double? EguValue { get => eguValue; set => eguValue = value; }
+		public DState? State { get => state; set => state = value; }
 	}
 }

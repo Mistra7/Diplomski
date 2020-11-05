@@ -71,7 +71,7 @@ namespace ProcessingModule
 
 			var realPoints = storage.GetPoints(points);
 
-			while (!disposedValue)
+			/*while (!disposedValue)
 			{
 				foreach(IPoint p in realPoints)
 				{
@@ -84,7 +84,7 @@ namespace ProcessingModule
 				}
 
 				automationTrigger.WaitOne();
-			}
+			}*/
 		}
 
 		#region IDisposable Support

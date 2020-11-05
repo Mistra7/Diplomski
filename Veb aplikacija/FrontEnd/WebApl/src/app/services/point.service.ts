@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { PointIdentifier } from '../entities/base-point-item';
 
 @Injectable({
   providedIn: 'root'
@@ -14,16 +15,20 @@ export class PointService {
 
   readRegister(pointId: number)
   {
-    return this.http.get(this.BaseURI + "/Point/ReadSingleRegister/?pid=" + pointId);
+    return this.http.get(this.BaseURI + "/Point/ReadSingleRegister?pid=" + pointId);
   }
 
   commandRegister(pointId: number, value: number)
   {
-    return this.http.get(this.BaseURI + "/Point/CommandSingleRegister/?pid=" + pointId + "&value=" + value);
+    return this.http.get(this.BaseURI + "/Point/CommandSingleRegister?pid=" + pointId + "&value=" + value);
   }
 
-  getMinAndMaxValue(pointId: number)
+  acqusitate(identifiers: Array<number>)
   {
-    return this.http.get(this.BaseURI + "/Point/GetMinAndMaxValue/?pid=" + pointId);
+    //console.log(ident);
+    /*var data = {
+      identifiers : ident
+    }*/
+    return this.http.post(this.BaseURI + "/Point/DoTheAcqusition", identifiers);
   }
 }

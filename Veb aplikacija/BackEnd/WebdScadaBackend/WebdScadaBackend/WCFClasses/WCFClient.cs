@@ -17,37 +17,73 @@ namespace WebdScadaBackend.WCFClasses
             factory = this.CreateChannel();
         }
 
-        public List<PointData> Connect()
+        public bool? AcqusitionCommand(List<PointIdentifier> points)
         {
             try
             {
-                return factory.Connect();
+                return factory.AcqusitionCommand(points);
             }
-            catch(Exception e)
+            catch
             {
                 return null;
             }
         }
 
-        public PointData ReadCommand(PointIdentifier point)
+        public List<RegisterData> AcqusitionResult(List<PointIdentifier> points)
+        {
+            try
+            {
+                return factory.AcqusitionResult(points);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public List<ConfigItemData> GetConfigItems()
+        {
+            try
+            {
+                return factory.GetConfigItems();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public List<PointData> GetPoints()
+        {
+            try
+            {
+                return factory.GetPoints();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public RegisterData ReadCommand(PointIdentifier point)
         {
             try
             {
                 return factory.ReadCommand(point);
             }
-            catch(Exception e)
+            catch
             {
                 return null;
             }
         }
 
-        public PointData WriteCommand(PointIdentifier point, short value)
+        public RegisterData WriteCommand(PointIdentifier point, ushort value)
         {
             try
             {
                 return factory.WriteCommand(point, value);
             }
-            catch(Exception e)
+            catch
             {
                 return null;
             }

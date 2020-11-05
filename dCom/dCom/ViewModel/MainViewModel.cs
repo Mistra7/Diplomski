@@ -259,5 +259,26 @@ namespace dCom.ViewModel
 		{
 			return pointsCache.Values.ToList();
 		}
+
+		public IPoint GetPoint(PointIdentifier pointId)
+		{
+			var points = Points.Where(p => pointId.Address == p.Address && pointId.PointType == p.Type).ToList();
+
+			return points[0];
+		}
+
+		public List<IPoint> GetPointsWithNewValues(List<PointIdentifier> pointIds)
+		{
+			List<IPoint> retVal = new List<IPoint>(pointIds.Count);
+			foreach (var pid in pointIds)
+			{
+				IPoint p;
+				if ( ( p = Points.ToList().Find(i => i.Address == pid.Address && i.Type == pid.PointType)) != null)
+				{
+					retVal.Add(p);
+				}
+			}
+			return retVal;
+		}
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +18,7 @@ namespace WebdScadaBackend.Controllers
     [ApiController]
     public class PointController : ControllerBase
     {
-        private static Dictionary<int, BasePointItem> points = new Dictionary<int, BasePointItem>();
+        private static Dictionary<int, PointItem> points = new Dictionary<int, PointItem>();
         private static WCFClient client = null;
         private PointContext _dataBase;
 
@@ -32,9 +33,7 @@ namespace WebdScadaBackend.Controllers
         {
             client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
 
-            List<PointData> pointsList = null;
-
-            pointsList = client.Connect();
+            var pointsList = client.GetPoints();
 
             if(pointsList == null)
             {
@@ -43,8 +42,26 @@ namespace WebdScadaBackend.Controllers
             else
             {
                 PutPointsInDataBase(pointsList);
-                return Ok(_dataBase.Points.ToArray());
             }
+
+            var configList = client.GetConfigItems();
+
+            if(configList == null)
+            {
+                return NotFound("ConnectionFailiure");
+            }
+            else
+            {
+                PutConfigsInDataBase(configList);
+            }
+
+            var Points = _dataBase.Points.ToList();
+
+            return new
+            {
+                Points,
+                ConfigItems = _dataBase.ConfigItems.ToArray()
+            }; //Ok(_dataBase.Points.ToArray());
         }
 
         [HttpGet]
@@ -75,9 +92,9 @@ namespace WebdScadaBackend.Controllers
 
                     point.RawValue = newValue.RawValue;
                     if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
-                        ((AnalogBase)point).EguValue = newValue.EguValue;
+                        point.EguValue = newValue.EguValue;
                     else
-                        ((DigitalBase)point).State = newValue.State;
+                        point.State = newValue.State;
 
                     _dataBase.SaveChanges();
                 }
@@ -97,27 +114,26 @@ namespace WebdScadaBackend.Controllers
 
         [HttpGet]
         [Route("CommandSingleRegister")]
-        public async Task<Object> CommandSingleRegister(int pid, short value)
+        public async Task<Object> CommandSingleRegister(int pid, int value)
         {
             try
             {
                 var point = _dataBase.Points.Find(pid);
                 if (point == null)
                     return BadRequest("Wrong point id");
-                
 
                 try
                 {
-                    var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, value);
+                    var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, (ushort)value);
 
                     if (newValue == null)
                         return NotFound("Read Command Failed");
 
                     point.RawValue = newValue.RawValue;
                     if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
-                        ((AnalogBase)point).EguValue = newValue.EguValue;
+                        point.EguValue = newValue.EguValue;
                     else
-                        ((DigitalBase)point).State = newValue.State;
+                        point.State = newValue.State;
 
                     _dataBase.SaveChanges();
                 }
@@ -134,27 +150,147 @@ namespace WebdScadaBackend.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("DoTheAcqusition")]
+        public async Task<Object> DoTheAcqusition([FromBody]List<int> identifiers)
+        {
+            try
+            {
+                var pointIdentifiers = new List<PointIdentifier>();
+                var configItems = new List<ConfigItem>();
+                var checkList = _dataBase.ConfigItems.ToList();
+
+                identifiers.ForEach(i => configItems.Add(checkList.Find(ci => ci.DataBaseId == i)));
+                configItems.ForEach(ci => pointIdentifiers.Add(new PointIdentifier(ci.RegistryType, ci.StartAddress)));
+
+                var commandSent = client.AcqusitionCommand(pointIdentifiers);
+
+                if (commandSent == null)
+                {
+                    return NotFound("Acqusition Command Failed");
+                }
+                else if(commandSent == false)
+                {
+                    return BadRequest();
+                }
+
+                Thread.Sleep(100);
+
+                var points = client.AcqusitionResult(pointIdentifiers);
+
+                if (points == null)
+                {
+                    return NotFound("Acqusition Command Failed");
+                }
+
+                return Ok(UpdatePoints(points));
+            }
+            catch(Exception e)
+            {
+                return Problem(e.Message);
+            }
+        }
+
         private void PutPointsInDataBase(List<PointData> points)
         {
-            _dataBase.Points.RemoveRange(_dataBase.Points.ToArray());
-            
+            if(_dataBase.Points.ToArray().Length != 0)
+            {
+                if (checkIfPointsListIsSame(points))
+                    return;
+                _dataBase.Points.RemoveRange(_dataBase.Points.ToArray());
+            }
+
             foreach(PointData point in points)
             {
-                BasePointItem newPoint = null;
-
-                if(point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
-                {
-                    newPoint = point.Type == PointType.ANALOG_INPUT ? (BasePointItem)(new AnalogInput(point)) : (BasePointItem)(new AnalogOutput(point));
-                }
-                else if(point.Type == PointType.DIGITAL_INPUT || point.Type == PointType.DIGITAL_OUTPUT)
-                {
-                    newPoint = point.Type == PointType.DIGITAL_INPUT ? (BasePointItem)(new DigitalInput(point)) : (BasePointItem)(new DigitalOutput(point));
-                }
+                PointItem newPoint = new PointItem(point);
 
                 _dataBase.Points.Add(newPoint);
             }
 
             _dataBase.SaveChanges();
+        }
+        
+        private void PutConfigsInDataBase(List<ConfigItemData> configItems)
+        {
+            if (_dataBase.ConfigItems.ToArray().Length != 0)
+            {
+                if (checkIfConfingListIsSame(configItems))
+                    return;
+                _dataBase.ConfigItems.RemoveRange(_dataBase.ConfigItems.ToArray());
+            }
+
+            foreach(ConfigItemData configItem in configItems)
+            {
+                var confItem = new ConfigItem() 
+                { 
+                    NumberOfRegisters = configItem.NumberOfRegisters, 
+                    RegistryType = configItem.RegistryType, 
+                    StartAddress = configItem.StartAddress, 
+                    SecondsPassedSinceLastPoll = 0,
+                    AcquisitionInterval = configItem.AcquisitionInterval
+                };
+
+                _dataBase.ConfigItems.Add(confItem);
+            }
+
+            _dataBase.SaveChanges();
+
+        }
+
+        private List<PointItem> UpdatePoints(List<RegisterData> registers)
+        {
+            var points = _dataBase.Points.ToList();
+            var returnValue = new List<PointItem>();
+
+            foreach(RegisterData register in registers)
+            {
+                var point = points.Find(p => p.Address == register.Address && p.Type == register.Type);
+
+                point.RawValue = register.RawValue;
+
+                if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
+                    point.EguValue = register.EguValue;
+                else
+                    point.State = register.State;
+
+                returnValue.Add(point);
+            }
+
+            _dataBase.SaveChanges();
+            return returnValue;
+        }
+
+        private bool checkIfPointsListIsSame(List<PointData> points)
+        {
+            var list = _dataBase.Points.ToList();
+            if (points.Count != list.Count)
+                return false;
+
+            foreach(PointItem pi in list)
+            {
+                if(points.Find(p => pi.Address == p.Address && pi.Type == p.Type) == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool checkIfConfingListIsSame(List<ConfigItemData> configs)
+        {
+            var list = _dataBase.ConfigItems.ToList();
+            if (configs.Count != list.Count)
+                return false;
+
+            foreach(ConfigItem ci in list)
+            {
+                var configItem = new ConfigItemData();
+                if ((configItem = configs.Find(c => c.StartAddress == ci.StartAddress && ci.RegistryType == c.RegistryType && ci.NumberOfRegisters == c.NumberOfRegisters)) == null)
+                    return false;
+            }
+
+            return true;
         }
     }
 }

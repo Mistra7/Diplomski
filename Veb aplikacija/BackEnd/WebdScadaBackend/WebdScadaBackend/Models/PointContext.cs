@@ -10,21 +10,17 @@ namespace WebdScadaBackend.Models
 {
     public class PointContext : DbContext
     {
-        public DbSet<BasePointItem> Points { get; set; }
+        public DbSet<PointItem> Points { get; set; }
+        public DbSet<ConfigItem> ConfigItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<BasePointItem>().HasDiscriminator(p => p.Type).HasValue(PointType.HR_LONG);
-            modelBuilder.Entity<AnalogInput>().HasDiscriminator(p => p.Type).HasValue(PointType.ANALOG_INPUT);
-            modelBuilder.Entity<AnalogOutput>().HasDiscriminator(p => p.Type).HasValue(PointType.ANALOG_OUTPUT);
-            modelBuilder.Entity<DigitalInput>().HasDiscriminator(p => p.Type).HasValue(PointType.DIGITAL_INPUT);
-            modelBuilder.Entity<DigitalOutput>().HasDiscriminator(p => p.Type).HasValue(PointType.DIGITAL_OUTPUT);
             base.OnModelCreating(modelBuilder);
         }
 
         public PointContext(DbContextOptions options): base(options)
         {
-
+            this.ChangeTracker.LazyLoadingEnabled = false;
         }
     }
 }
