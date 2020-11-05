@@ -1,28 +1,33 @@
- <table class="table">
-     <thead class="table-dark">
-         <tr>
-             <th scope="col">Name</th>
-             <th scope="col">Type</th>
-             <th scope="col">Address</th>
-             <th scope="col">Value</th>
-             <th scope="col">Raw value</th>
-             <th scope="col">Timestamp</th>
-             <th scope="col">Alarm</th>
-         </tr>
-     </thead>
-     <tbody>
-         <tr *ngFor="let point of PointList; let i = index"  (dblclick)="openModal()" (click)="clickFunc(i, point)" [class.backgroundColor]="selectedRow == i">
-             <td>{{point.name}}</td>
-             <td>{{stringyfiedTypeOfPoint(point.type)}}</td>
-             <td>{{point.address}}</td>
-             <td *ngIf="point.type == 1 || point.type == 2">{{stringyfiedStateOfPoint(point.state)}}</td>
-             <td *ngIf="point.type == 3 || point.type == 4">{{point.eguValue}}</td>
-             <td>{{point.rawValue}}</td>
-             <td>{{dateFormatter(point.timestamp)}}</td>
-             <td>{{stringyfiedAlarmOfPoint(point.alarm)}}</td>
-         </tr>
-     </tbody>
- </table>
+<div>
+    <table class="table">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Address</th>
+                <th scope="col">Value</th>
+                <th scope="col">Raw value</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Alarm</th>
+            </tr>
+        </thead>
+        
+        <tbody>
+            <tr *ngFor="let point of PointList; let i = index"  (dblclick)="openModal()" (click)="clickFunc(i, point)" [class.backgroundColor]="selectedRow == i">
+                <td>{{point.name}}</td>
+                <td>{{stringyfiedTypeOfPoint(point.type)}}</td>
+                <td>{{point.address}}</td>
+                <td *ngIf="point.type == 1 || point.type == 2">{{stringyfiedStateOfPoint(point.state)}}</td>
+                <td *ngIf="point.type == 3 || point.type == 4">{{point.eguValue}}</td>
+                <td>{{point.rawValue}}</td>
+                <td>{{dateFormatter(point.timestamp)}}</td>
+                <td>{{stringyfiedAlarmOfPoint(point.alarm)}}</td>
+            </tr>
+        
+        </tbody>
+    </table>
+</div>
+
  <button id="openModalButton" [hidden]="true" data-toggle="modal" data-target="#controlWindow"></button>
 
  <app-control-window (notifyParent)="getNotification($event)"  [point]="selectedPoint"></app-control-window>

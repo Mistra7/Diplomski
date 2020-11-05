@@ -13,6 +13,7 @@ namespace WCFContract
         private ushort address;
         private ushort rawValue;
         private double eguValue;
+        private DateTime timestamp;
         private DState state;
 
         public RegisterData() {}
@@ -22,5 +23,6 @@ namespace WCFContract
         public DState State { get => state; set => state = value; }
         public ushort Address { get => address; set => address = value; }
         public PointType Type { get => type; set => type = value; }
+        public DateTime Timestamp { get => timestamp; set => timestamp = value; }
     }
 }

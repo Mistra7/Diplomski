@@ -91,6 +91,7 @@ namespace WebdScadaBackend.Controllers
                         return NotFound("Read Command Failed");
 
                     point.RawValue = newValue.RawValue;
+                    point.Timestamp = newValue.Timestamp;
                     if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
                         point.EguValue = newValue.EguValue;
                     else
@@ -130,6 +131,7 @@ namespace WebdScadaBackend.Controllers
                         return NotFound("Read Command Failed");
 
                     point.RawValue = newValue.RawValue;
+                    point.Timestamp = newValue.Timestamp;
                     if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
                         point.EguValue = newValue.EguValue;
                     else
@@ -247,7 +249,7 @@ namespace WebdScadaBackend.Controllers
                 var point = points.Find(p => p.Address == register.Address && p.Type == register.Type);
 
                 point.RawValue = register.RawValue;
-
+                point.Timestamp = register.Timestamp;
                 if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
                     point.EguValue = register.EguValue;
                 else

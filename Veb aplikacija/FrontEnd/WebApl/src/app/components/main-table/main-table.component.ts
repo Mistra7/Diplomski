@@ -32,7 +32,7 @@ export class MainTableComponent implements OnInit {
   ngOnInit(): void {
     this.connectionId = setInterval(() => {
       this.connectToServer();
-    }, 5000);
+    }, 2000);
 
     this.acqusitionId = setInterval(() => {
       this.doTheAcqusition();
@@ -74,10 +74,23 @@ export class MainTableComponent implements OnInit {
     this.connected = JSON.parse(localStorage.getItem("connected"));
     if(!this.connected)
     {
-      this.pointService.connectToDCom().subscribe(
+      this.pointService.connectToDCom().toPromise().then(
+        (res: any) => {
+          console.log(Date.now())
+          this.PointList = res.points as Array<BasePointItem>;
+          this.ConfigList = res.configItems as Array<ConfigItem>;
+          console.log(this.PointList);
+          this.connected = true;
+          localStorage.setItem("connected", JSON.stringify(this.connected));
+        }
+      )
+      .catch(
+        err => {
+          alert(err);
+        }
+      )
+      /*this.pointService.connectToDCom().subscribe(
         (res : any) => {
-          console.log(res);
-          
           this.PointList = res.points as Array<BasePointItem>;
           this.ConfigList = res.configItems as Array<ConfigItem>;
           console.log(this.PointList);
@@ -87,7 +100,7 @@ export class MainTableComponent implements OnInit {
         err => {
           console.log(err);
         }
-      )
+      )*/
     }
   }
 
@@ -129,6 +142,7 @@ export class MainTableComponent implements OnInit {
     this.PointList.forEach(p => {
       if(p.dataBaseId == point.dataBaseId){
         p.rawValue = point.rawValue;
+        p.timestamp = point.timestamp;
         if(p.type == PointType.ANALOG_INPUT || p.type == PointType.ANALOG_OUTPUT){
           p.eguValue = point.eguValue;
         }

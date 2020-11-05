@@ -72,6 +72,7 @@ namespace dCom.ViewModel
                 pointToRead = storage.GetPoint(point);
                 var returnValue = new RegisterData()
                 {
+                    Timestamp = pointToRead.Timestamp,
                     Type = pointToRead.ConfigItem.RegistryType,
                     RawValue = pointToRead.RawValue,
                     EguValue = pointToRead.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToRead.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToRead).EguValue : 0,
@@ -97,6 +98,7 @@ namespace dCom.ViewModel
                 pointToWrite = storage.GetPoint(point);
                 var returnValue = new RegisterData()
                 {
+                    Timestamp = pointToWrite.Timestamp,
                     Type = pointToWrite.ConfigItem.RegistryType,
                     RawValue = pointToWrite.RawValue,
                     EguValue = pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToWrite).EguValue : 0,
@@ -177,12 +179,13 @@ namespace dCom.ViewModel
                         returnValue.Add(
                         new RegisterData()
                         {
+                            Timestamp = p.Timestamp,
                             Address = p.Address,
                             RawValue = p.RawValue,
                             Type = p.Type,
                             EguValue = p.Type == PointType.ANALOG_INPUT || p.Type == PointType.ANALOG_OUTPUT ? ((AnalogBase)p).EguValue : 0,
                             State = p.Type == PointType.DIGITAL_INPUT || p.Type == PointType.DIGITAL_OUTPUT ? ((DigitalBase)p).State : 0
-                        });
+                        }) ;
                     }
                 }
 
