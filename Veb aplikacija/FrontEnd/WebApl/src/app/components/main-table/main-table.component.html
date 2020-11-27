@@ -9,6 +9,7 @@
                 <th scope="col">Raw value</th>
                 <th scope="col">Timestamp</th>
                 <th scope="col">Alarm</th>
+                <th scope="col">User set acqusition period</th>
             </tr>
         </thead>
         
@@ -22,6 +23,7 @@
                 <td>{{point.rawValue}}</td>
                 <td>{{dateFormatter(point.timestamp)}}</td>
                 <td>{{stringyfiedAlarmOfPoint(point.alarm)}}</td>
+                <td>{{point.acquPeriod}}</td>
             </tr>
         
         </tbody>
@@ -30,4 +32,4 @@
 
  <button id="openModalButton" [hidden]="true" data-toggle="modal" data-target="#controlWindow"></button>
 
- <app-control-window (notifyParent)="getNotification($event)"  [point]="selectedPoint"></app-control-window>
+ <app-control-window (notifyParent1)="getNotification1($event)" (notifyParent)="getNotification($event)" [canDoAcq]="doAcqus" [point]="selectedPoint"></app-control-window>

@@ -67,6 +67,7 @@ export class MainTableComponent implements OnInit {
 
   openModal()
   {
+    this.doAcqus = JSON.parse(localStorage.getItem("doAcquisiton"));
     document.getElementById("openModalButton").click();
   }
 
@@ -82,6 +83,7 @@ export class MainTableComponent implements OnInit {
           console.log(this.PointList);
           this.connected = true;
           localStorage.setItem("connected", JSON.stringify(this.connected));
+          this.updatePoints();
         }
       )
       .catch(
@@ -89,18 +91,6 @@ export class MainTableComponent implements OnInit {
           alert(err);
         }
       )
-      /*this.pointService.connectToDCom().subscribe(
-        (res : any) => {
-          this.PointList = res.points as Array<BasePointItem>;
-          this.ConfigList = res.configItems as Array<ConfigItem>;
-          console.log(this.PointList);
-          this.connected = true;
-          localStorage.setItem("connected", JSON.stringify(this.connected));
-        },
-        err => {
-          console.log(err);
-        }
-      )*/
     }
   }
 
@@ -125,10 +115,31 @@ export class MainTableComponent implements OnInit {
             })
           },
           err => {
-            alert(err);
+            console.log(err);
           }
         )
       }
+    }
+    else 
+    {
+      this.PointList.forEach(p => {
+        if(p.acquPeriod > 0)
+        {
+          ++p.secsSinceLastAcqu;
+          if(p.secsSinceLastAcqu >= p.acquPeriod)
+          {
+            this.pointService.readRegister(p.dataBaseId).subscribe(
+              res => {
+                this.updatePoint(res as BasePointItem);
+              },
+              err => {
+                console.log(err);
+              }
+            );
+            p.secsSinceLastAcqu = 0;
+          }
+        }
+      })
     }
   }
 
@@ -152,5 +163,24 @@ export class MainTableComponent implements OnInit {
         this.notifyParent.emit(p);
       }      
     });
+  }
+
+  getNotification1(point: BasePointItem)
+  {
+    this.PointList.forEach(p => {
+      if(p.pointId == point.pointId)
+      {
+        p.acquPeriod = point.acquPeriod;
+        return;
+      }
+    })
+  }
+
+  updatePoints()
+  {
+    this.PointList.forEach(p => {
+      p.acquPeriod = 0;
+      p.secsSinceLastAcqu = 0;
+    })
   }
 }

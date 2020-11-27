@@ -12,8 +12,11 @@ import { PointService } from 'src/app/services/point.service';
 })
 export class ControlWindowComponent implements OnInit {
   @Input() point: BasePointItem = new BasePointItem();
+  @Input() canDoAcq : boolean = false;
   @Output() notifyParent: EventEmitter<BasePointItem> = new EventEmitter();
+  @Output() notifyParent1: EventEmitter<BasePointItem> = new EventEmitter();
   commandedValue = 0;
+  acqValue = 0;
   isCommandedValueValid = true;
   constructor(private pointService: PointService) {
   }
@@ -31,6 +34,12 @@ export class ControlWindowComponent implements OnInit {
     {
       return (point.eguValue);
     }
+  }
+
+  setAcqPeriod()
+  {
+    this.point.acquPeriod = this.acqValue;
+    this.acqValue = 0;
   }
 
   writeCommand(){
@@ -88,6 +97,14 @@ export class ControlWindowComponent implements OnInit {
         alert(err.message);
       }
     )
+  }
+
+  checkValue(value : number)
+  {
+    if(value < 0)
+      return true;
+    else
+      return false;
   }
 
   

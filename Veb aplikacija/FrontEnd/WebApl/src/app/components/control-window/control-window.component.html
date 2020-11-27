@@ -27,6 +27,17 @@
                     <div>
                         <button (click)="readCommand()">Read</button>
                     </div>
+                    <div>
+                        <form>
+                            <table>
+                                <tr>
+                                    <td>Acquisiton Period: </td>
+                                    <td><input type="number" name="acq" [(ngModel)]="acqValue"></td>
+                                    <td><button [disabled]="canDoAcq || checkValue(acqValue)" (click)="setAcqPeriod()">Set</button></td>
+                                </tr>
+                            </table>
+                        </form>
+                    </div>
                 </div>                
             </div>
         </div>

@@ -64,11 +64,17 @@ namespace dCom.ViewModel
         public RegisterData ReadCommand(PointIdentifier point)
         {
             var pointToRead = storage.GetPoint(point);
-
+            Transaction trans = null;
             try
             {
-                processingManager.ExecuteReadCommand(pointToRead.ConfigItem, configuration.GetTransactionId(), configuration.UnitAddress, point.Address, 1);
-                Thread.Sleep(100);
+                ushort tranId = configuration.GetTransactionId();
+                storage.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+                processingManager.ExecuteReadCommand(pointToRead.ConfigItem, tranId , configuration.UnitAddress, point.Address, 1);
+
+                while(!(trans = storage.Transactions.Find(t => t.TransactionId == tranId)).Finished)
+                    Thread.Sleep(25);
+
+                storage.Transactions.Remove(trans);
                 pointToRead = storage.GetPoint(point);
                 var returnValue = new RegisterData()
                 {
@@ -78,11 +84,11 @@ namespace dCom.ViewModel
                     EguValue = pointToRead.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToRead.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToRead).EguValue : 0,
                     State = pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_INPUT || pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_OUTPUT ? ((DigitalBase)pointToRead).State : 0 
                 };
-
                 return returnValue;
             }
             catch(Exception e)
             {
+                storage.Transactions.Remove(trans);
                 return null;
             }
         }
@@ -90,11 +96,18 @@ namespace dCom.ViewModel
         public RegisterData WriteCommand(PointIdentifier point, ushort value)
         {
             var pointToWrite = storage.GetPoint(point);
-
+            Transaction trans = null;
             try
             {
-                processingManager.ExecuteWriteCommand(pointToWrite.ConfigItem, configuration.GetTransactionId(), configuration.UnitAddress, point.Address, (int)value);
-                Thread.Sleep(100);
+                ushort tranId = configuration.GetTransactionId();
+                storage.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+                processingManager.ExecuteWriteCommand(pointToWrite.ConfigItem, tranId, configuration.UnitAddress, point.Address, (int)value);
+
+                while (!(trans = storage.Transactions.Find(t => t.TransactionId == tranId)).Finished)
+                    Thread.Sleep(25);
+
+                storage.Transactions.Remove(trans);
+
                 pointToWrite = storage.GetPoint(point);
                 var returnValue = new RegisterData()
                 {
@@ -104,11 +117,11 @@ namespace dCom.ViewModel
                     EguValue = pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToWrite).EguValue : 0,
                     State = pointToWrite.ConfigItem.RegistryType == PointType.DIGITAL_INPUT || pointToWrite.ConfigItem.RegistryType == PointType.DIGITAL_OUTPUT ? ((DigitalBase)pointToWrite).State : 0
                 };
-
                 return returnValue;
             }
             catch
             {
+                storage.Transactions.Remove(trans);
                 return null;
             }
         }

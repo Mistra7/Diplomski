@@ -17,9 +17,13 @@ export class BasePointItem {
     maxValue: number;
     eguValue: number;
     state: DState;
+    acquPeriod: number;
+    secsSinceLastAcqu: number;
 
     constructor() {
         this.name = "";
+        this.secsSinceLastAcqu = 0;
+        this.acquPeriod = 0;
     }
 }
 

@@ -14,7 +14,7 @@ using WCFContract;
 
 namespace dCom.ViewModel
 {
-    internal class MainViewModel : ViewModelBase, IDisposable, IStateUpdater, IStorage
+	internal class MainViewModel : ViewModelBase, IDisposable, IStateUpdater, IStorage
 	{
 		public ObservableCollection<BasePointItem> Points { get; set; }
 
@@ -25,8 +25,8 @@ namespace dCom.ViewModel
 		private ConnectionState connectionState;
 		private Acquisitor acquisitor;
 		private AutoResetEvent acquisitionTrigger = new AutoResetEvent(false);
-        private AutoResetEvent automationTrigger = new AutoResetEvent(false);
-        private TimeSpan elapsedTime = new TimeSpan();
+		private AutoResetEvent automationTrigger = new AutoResetEvent(false);
+		private TimeSpan elapsedTime = new TimeSpan();
 		private Dispatcher dispather = Dispatcher.CurrentDispatcher;
 		private string logText;
 		private StringBuilder logBuilder;
@@ -37,7 +37,8 @@ namespace dCom.ViewModel
 		private bool timerThreadStopSignal = true;
 		private bool disposed = false;
 		IConfiguration configuration;
-        private IProcessingManager processingManager = null;
+		private IProcessingManager processingManager = null;
+		public List<Transaction> Transactions { get; set; }
 		#endregion Fields
 
 		Dictionary<int, IPoint> pointsCache = new Dictionary<int, IPoint>();
@@ -108,6 +109,7 @@ namespace dCom.ViewModel
 
 		public MainViewModel()
 		{
+			Transactions = new List<Transaction>();
 			configuration = new ConfigReader();
 			commandExecutor = new FunctionExecutor(this, configuration);
             this.processingManager = new ProcessingManager(this, commandExecutor);
@@ -214,8 +216,20 @@ namespace dCom.ViewModel
 		{
 			if (disposed)
 				return;
-
 			string threadName = Thread.CurrentThread.Name;
+
+			string[] vs = message.Split(' ');
+
+			ushort address = 0;
+			ushort.TryParse(vs[6], out address);
+			Transactions.ForEach(t =>
+			{
+				if(t.Address == address)
+				{
+					t.Finished = true;
+				}
+			});
+
 
 			dispather.Invoke((Action)(() =>
 			{
@@ -279,6 +293,11 @@ namespace dCom.ViewModel
 				}
 			}
 			return retVal;
+		}
+
+		public bool GetDisposed()
+		{
+			return disposed;
 		}
 	}
 }
