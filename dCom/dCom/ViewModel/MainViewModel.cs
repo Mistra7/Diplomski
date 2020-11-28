@@ -26,6 +26,7 @@ namespace dCom.ViewModel
 		private Acquisitor acquisitor;
 		private AutoResetEvent acquisitionTrigger = new AutoResetEvent(false);
 		private AutoResetEvent automationTrigger = new AutoResetEvent(false);
+		private AutoResetEvent serverTrigger = new AutoResetEvent(false);
 		private TimeSpan elapsedTime = new TimeSpan();
 		private Dispatcher dispather = Dispatcher.CurrentDispatcher;
 		private string logText;
@@ -38,7 +39,7 @@ namespace dCom.ViewModel
 		private bool disposed = false;
 		IConfiguration configuration;
 		private IProcessingManager processingManager = null;
-		public List<Transaction> Transactions { get; set; }
+		
 		#endregion Fields
 
 		Dictionary<int, IPoint> pointsCache = new Dictionary<int, IPoint>();
@@ -109,18 +110,24 @@ namespace dCom.ViewModel
 
 		public MainViewModel()
 		{
-			Transactions = new List<Transaction>();
 			configuration = new ConfigReader();
 			commandExecutor = new FunctionExecutor(this, configuration);
             this.processingManager = new ProcessingManager(this, commandExecutor);
 			this.acquisitor = new Acquisitor(acquisitionTrigger, this.processingManager, this, configuration);
 			this.automationManager = new AutomationManager(this, processingManager, automationTrigger, configuration);
-			this.server = new WCFServer(this, processingManager, configuration);
+			var thread = new Thread(StartWCFServer);
+			thread.Name = "WCF Server";
+			thread.Start();
 			InitializePointCollection();
 			InitializeAndStartThreads();
 			logBuilder = new StringBuilder();
 			ConnectionState = ConnectionState.DISCONNECTED;
 			Thread.CurrentThread.Name = "Main Thread";
+		}
+
+		void StartWCFServer()
+		{
+			this.server = new WCFServer(this, processingManager, configuration, serverTrigger);
 		}
 
 		#region Private methods
@@ -196,6 +203,7 @@ namespace dCom.ViewModel
 				ElapsedTime = ElapsedTime.Add(new TimeSpan(0, 0, 1));
 				acquisitionTrigger.Set();
                 automationTrigger.Set();
+				serverTrigger.Set();
 				Thread.Sleep(1000);
 			}
 		}
@@ -218,7 +226,7 @@ namespace dCom.ViewModel
 				return;
 			string threadName = Thread.CurrentThread.Name;
 
-			string[] vs = message.Split(' ');
+			/*string[] vs = message.Split(' ');
 
 			ushort address = 0;
 			ushort.TryParse(vs[6], out address);
@@ -228,7 +236,7 @@ namespace dCom.ViewModel
 				{
 					t.Finished = true;
 				}
-			});
+			});*/
 
 
 			dispather.Invoke((Action)(() =>
@@ -252,6 +260,7 @@ namespace dCom.ViewModel
 			acquisitionTrigger.Dispose();
 			automationManager.Stop();
             automationTrigger.Dispose();
+			serverTrigger.Dispose();
 		}
 
 		public List<IPoint> GetPoints(List<PointIdentifier> pointIds)

@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using System.Collections.Generic;
+
+namespace Common
 {
     /// <summary>
     /// Interface containing logic for processing points and executing commands.
@@ -32,5 +34,8 @@
         /// <param name="startAddress">The start address.</param>
         /// <param name="numberOfPoints">The number of points that should be read.</param>
         void ExecuteReadCommand(IConfigItem configItem, ushort transactionId, byte remoteUnitAddress, ushort startAddress, ushort numberOfPoints);
+
+        //transactionId, Address, Finished
+        List<Transaction> Transactions { get; set; }
     }
 }

@@ -27,7 +27,7 @@ namespace WebdScadaBackend
                     var context = services.GetRequiredService<PointContext>();
                     DbIni.Initialize(context);
                 }
-                catch(Exception e)
+                catch
                 {
 
                 }

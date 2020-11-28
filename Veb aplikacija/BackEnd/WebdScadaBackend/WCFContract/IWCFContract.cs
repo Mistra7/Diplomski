@@ -20,10 +20,6 @@ namespace WCFContract
         [OperationContract]
         RegisterData WriteCommand(PointIdentifier point, ushort value);
         [OperationContract]
-        bool? AcqusitionCommand(List<PointIdentifier> points);
-        [OperationContract]
-        List<RegisterData> AcqusitionResult(List<PointIdentifier> points);
-
-        
+        List<RegisterData> DoAcquisiton(List<PointIdentifier> points);
     }
 }

@@ -17,23 +17,11 @@ namespace WebdScadaBackend.WCFClasses
             factory = this.CreateChannel();
         }
 
-        public bool? AcqusitionCommand(List<PointIdentifier> points)
+        public List<RegisterData> DoAcquisiton(List<PointIdentifier> points)
         {
             try
             {
-                return factory.AcqusitionCommand(points);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public List<RegisterData> AcqusitionResult(List<PointIdentifier> points)
-        {
-            try
-            {
-                return factory.AcqusitionResult(points);
+                return factory.DoAcquisiton(points);
             }
             catch
             {

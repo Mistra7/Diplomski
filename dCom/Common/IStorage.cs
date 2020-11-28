@@ -34,7 +34,5 @@ namespace Common
         List<IPoint> GetAllPoints();
         IPoint GetPoint(PointIdentifier pointId);
         List<IPoint> GetPointsWithNewValues(List<PointIdentifier> pointIds);
-        //transactionId, Address, Finished
-        List<Transaction> Transactions { get; set; }
     }
 }

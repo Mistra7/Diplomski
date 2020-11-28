@@ -16,7 +16,7 @@ namespace ProcessingModule
         private IStorage storage;
         private AlarmProcessor alarmProcessor;
         private EGUConverter eguConverter;
-
+        public List<Transaction> Transactions { get; set; }
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessingManager"/> class.
         /// </summary>
@@ -28,6 +28,7 @@ namespace ProcessingModule
             this.functionExecutor = functionExecutor;
             this.alarmProcessor = new AlarmProcessor();
             this.eguConverter = new EGUConverter();
+            Transactions = new List<Transaction>();
             this.functionExecutor.UpdatePointEvent += CommandExecutor_UpdatePointEvent;
         }
 
@@ -109,7 +110,7 @@ namespace ProcessingModule
         private void CommandExecutor_UpdatePointEvent(PointType type, ushort pointAddress, ushort newValue)
         {
             List<IPoint> points = storage.GetPoints(new List<PointIdentifier>(1) { new PointIdentifier(type, pointAddress) });
-            
+
             if (type == PointType.ANALOG_INPUT || type == PointType.ANALOG_OUTPUT)
             {
                 ProcessAnalogPoint(points.First() as IAnalogPoint, newValue);
@@ -118,6 +119,9 @@ namespace ProcessingModule
             {
                 ProcessDigitalPoint(points.First() as IDigitalPoint, newValue);
             }
+
+            if (Transactions.Exists(t => t.Address == pointAddress))
+                Transactions.Find(t => t.Address == pointAddress).Finished = true;
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using dCom.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
 using System.Text;
@@ -17,10 +18,11 @@ namespace dCom.ViewModel
         private static IProcessingManager processingManager;
         private static IConfiguration configuration;
         private static ServiceHost host;
+        private static AutoResetEvent automationTrigger;
 
         public WCFServer() { }
 
-        public WCFServer(IStorage stor, IProcessingManager manager, IConfiguration config)
+        public WCFServer(IStorage stor, IProcessingManager manager, IConfiguration config, AutoResetEvent automationTri)
         {
             storage = stor;
             processingManager = manager;
@@ -29,6 +31,7 @@ namespace dCom.ViewModel
             string address = "net.tcp://localhost:9999/Server";
             host = new ServiceHost(typeof(WCFServer));
             host.AddServiceEndpoint(typeof(IWCFContract), binding, address);
+            automationTrigger = automationTri;
 
             host.Open();
         }
@@ -65,30 +68,36 @@ namespace dCom.ViewModel
         {
             var pointToRead = storage.GetPoint(point);
             Transaction trans = null;
+
             try
             {
                 ushort tranId = configuration.GetTransactionId();
-                storage.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+                processingManager.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+
                 processingManager.ExecuteReadCommand(pointToRead.ConfigItem, tranId , configuration.UnitAddress, point.Address, 1);
 
-                while(!(trans = storage.Transactions.Find(t => t.TransactionId == tranId)).Finished)
+                while(!(trans = processingManager.Transactions.Find(t => t.TransactionId == tranId)).Finished)
                     Thread.Sleep(25);
 
-                storage.Transactions.Remove(trans);
+                processingManager.Transactions.Remove(trans);
+
                 pointToRead = storage.GetPoint(point);
+
                 var returnValue = new RegisterData()
                 {
+                    Address = ((BasePointItem)pointToRead).Address,
                     Timestamp = pointToRead.Timestamp,
                     Type = pointToRead.ConfigItem.RegistryType,
                     RawValue = pointToRead.RawValue,
                     EguValue = pointToRead.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToRead.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToRead).EguValue : 0,
                     State = pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_INPUT || pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_OUTPUT ? ((DigitalBase)pointToRead).State : 0 
                 };
+
                 return returnValue;
             }
-            catch(Exception e)
+            catch
             {
-                storage.Transactions.Remove(trans);
+                processingManager.Transactions.Remove(trans);
                 return null;
             }
         }
@@ -100,13 +109,13 @@ namespace dCom.ViewModel
             try
             {
                 ushort tranId = configuration.GetTransactionId();
-                storage.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+                processingManager.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
                 processingManager.ExecuteWriteCommand(pointToWrite.ConfigItem, tranId, configuration.UnitAddress, point.Address, (int)value);
 
-                while (!(trans = storage.Transactions.Find(t => t.TransactionId == tranId)).Finished)
+                while (!(trans = processingManager.Transactions.Find(t => t.TransactionId == tranId)).Finished)
                     Thread.Sleep(25);
 
-                storage.Transactions.Remove(trans);
+                processingManager.Transactions.Remove(trans);
 
                 pointToWrite = storage.GetPoint(point);
                 var returnValue = new RegisterData()
@@ -121,7 +130,70 @@ namespace dCom.ViewModel
             }
             catch
             {
-                storage.Transactions.Remove(trans);
+                processingManager.Transactions.Remove(trans);
+                return null;
+            }
+        }
+
+        public List<RegisterData> DoAcquisiton(List<PointIdentifier> points)
+        {
+            try
+            {
+                var configItems = configuration.GetConfigurationItems();
+                var readPointIdentifiers = new List<PointIdentifier>();
+                var checkData = new Dictionary<ushort, ushort>();
+                var transIds = new List<ushort>();
+                foreach (PointIdentifier point in points)
+                {
+                    var transId = configuration.GetTransactionId();
+                    //transIds.Add(transId);
+                    var configItem = configItems.Find(ci => ci.StartAddress == point.Address && ci.RegistryType == point.PointType);
+                    for (int i = 0; i < configItem.NumberOfRegisters; i++)
+                    {
+                        checkData.Add((ushort)(configItem.StartAddress + i), transId);
+                        processingManager.Transactions.Add(new Transaction(transId, (ushort)(configItem.StartAddress + i), false));
+                        readPointIdentifiers.Add(new PointIdentifier(configItem.RegistryType, (ushort)(configItem.StartAddress + i)));
+                    }
+                    processingManager.ExecuteReadCommand(configItem, transId, configuration.UnitAddress, point.Address, configItem.NumberOfRegisters);
+                }
+
+                var counter = 0;
+
+                while(true)
+                {
+                    readPointIdentifiers.ForEach(t =>
+                    {
+                        if (CheckIfTransactionFinished(checkData[t.Address], t.Address))
+                            ++counter;
+                    });
+
+                    if (counter == checkData.Count)
+                        break;
+                    else
+                        automationTrigger.WaitOne(10);
+                }
+
+                var values = storage.GetPoints(readPointIdentifiers).Cast<BasePointItem>().ToList();
+                var returnValue = new List<RegisterData>();
+
+                values.ForEach(p =>
+                {
+                    returnValue.Add(new RegisterData()
+                    {
+                        Timestamp = p.Timestamp,
+                        Address = p.Address,
+                        RawValue = p.RawValue,
+                        Type = p.Type,
+                        EguValue = p.Type == PointType.ANALOG_INPUT || p.Type == PointType.ANALOG_OUTPUT ? ((AnalogBase)p).EguValue : 0,
+                        State = p.Type == PointType.DIGITAL_INPUT || p.Type == PointType.DIGITAL_OUTPUT ? ((DigitalBase)p).State : 0
+                    });
+                });
+
+                return returnValue;
+
+            }
+            catch
+            {
                 return null;
             }
         }
@@ -154,61 +226,16 @@ namespace dCom.ViewModel
 
         }
 
-        public bool? AcqusitionCommand(List<PointIdentifier> points)
+        private bool CheckIfTransactionFinished(ushort transId, ushort address)
         {
-            try
-            {
-                var configItems = configuration.GetConfigurationItems();
-                var readPointIdentifiers = new List<PointIdentifier>();
-
-                foreach (PointIdentifier point in points)
-                {
-                    var configItem = configItems.Find(ci => ci.StartAddress == point.Address && ci.RegistryType == point.PointType);
-                    processingManager.ExecuteReadCommand(configItem, configuration.GetTransactionId(), configuration.UnitAddress, point.Address, configItem.NumberOfRegisters);
-                }
-
-                return true;
-            }
-            catch
-            {
+            Transaction t = null;
+            if ((t = processingManager.Transactions.Find(tr => transId == tr.TransactionId && tr.Address == address)) == null)
                 return false;
-            } 
-        }
 
-        public List<RegisterData> AcqusitionResult(List<PointIdentifier> points)
-        {
-            try
-            {
-                var configItems = configuration.GetConfigurationItems();
-                var returnValue = new List<RegisterData>();
-                foreach (PointIdentifier point in points)
-                {
-                    var configItem = configItems.Find(ci => ci.StartAddress == point.Address && ci.RegistryType == point.PointType);
-                    for (int i = 0; i < configItem.NumberOfRegisters; i++)
-                    {
-                        var p = storage.GetPoint(new PointIdentifier()
-                        { Address = (ushort)(configItem.StartAddress + i), PointType = configItem.RegistryType }) as BasePointItem;
+            if (t.Finished)
+                processingManager.Transactions.Remove(t);
 
-                        returnValue.Add(
-                        new RegisterData()
-                        {
-                            Timestamp = p.Timestamp,
-                            Address = p.Address,
-                            RawValue = p.RawValue,
-                            Type = p.Type,
-                            EguValue = p.Type == PointType.ANALOG_INPUT || p.Type == PointType.ANALOG_OUTPUT ? ((AnalogBase)p).EguValue : 0,
-                            State = p.Type == PointType.DIGITAL_INPUT || p.Type == PointType.DIGITAL_OUTPUT ? ((DigitalBase)p).State : 0
-                        }) ;
-                    }
-                }
-
-                return returnValue;
-            }
-            catch
-            {
-                return null;
-            }
-            
+            return t.Finished;
         }
     }
 }

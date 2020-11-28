@@ -161,31 +161,37 @@ namespace WebdScadaBackend.Controllers
                 var pointIdentifiers = new List<PointIdentifier>();
                 var configItems = new List<ConfigItem>();
                 var checkList = _dataBase.ConfigItems.ToList();
+                var points = new List<RegisterData>();
 
                 identifiers.ForEach(i => configItems.Add(checkList.Find(ci => ci.DataBaseId == i)));
                 configItems.ForEach(ci => pointIdentifiers.Add(new PointIdentifier(ci.RegistryType, ci.StartAddress)));
 
-                var commandSent = client.AcqusitionCommand(pointIdentifiers);
+                points = client.DoAcquisiton(pointIdentifiers);
 
-                if (commandSent == null)
-                {
-                    return NotFound("Acqusition Command Failed");
-                }
-                else if(commandSent == false)
-                {
-                    return BadRequest();
-                }
-
-                Thread.Sleep(100);
-
-                var points = client.AcqusitionResult(pointIdentifiers);
-
-                if (points == null)
+                if(points == null)
                 {
                     return NotFound("Acqusition Command Failed");
                 }
 
                 return Ok(UpdatePoints(points));
+                /*configItems.ForEach(ci =>
+                {
+                    for (int i = 0; i < ci.NumberOfRegisters; i++)
+                    {
+                        var point = client.ReadCommand(new PointIdentifier(ci.RegistryType, (ushort)(ci.StartAddress + i)));
+                        if (point == null)
+                        {
+                            points = null;
+                            return;
+                        }
+                        points.Add(point);
+                    }
+                });
+
+                if(points == null)
+                    return NotFound("Acqusition Command Failed");
+
+                return Ok(UpdatePoints(points));*/
             }
             catch(Exception e)
             {
@@ -258,7 +264,8 @@ namespace WebdScadaBackend.Controllers
                 returnValue.Add(point);
             }
 
-            _dataBase.SaveChanges();
+            _dataBase.SaveChangesAsync();
+            
             return returnValue;
         }
 
