@@ -49,8 +49,10 @@ export class ControlWindowComponent implements OnInit {
         this.commandedValue = 0;
       },
       err => {
-        alert(err.message);
+        if(err.error = "ConnectionFailiure")
+          this.notifyParent.emit(null);
         this.commandedValue = 0;
+        document.getElementById("closeModal").click();
       }
     )
   }
@@ -94,7 +96,10 @@ export class ControlWindowComponent implements OnInit {
       },
       err => 
       {
-        alert(err.message);
+        if(err.error = "ConnectionFailiure")
+          this.notifyParent.emit(null);
+        this.commandedValue = 0;
+        document.getElementById("closeModal").click();
       }
     )
   }

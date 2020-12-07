@@ -14,7 +14,10 @@
         </thead>
         
         <tbody>
-            <tr *ngFor="let point of PointList; let i = index"  (dblclick)="openModal()" (click)="clickFunc(i, point)" [class.backgroundColor]="selectedRow == i">
+            <tr *ngFor="let point of PointList; let i = index"  (dblclick)="openModal()" 
+            (click)="clickFunc(i, point)" [class.backgroundColor]="selectedRow == i"
+            [class.abnormalColor]="point.alarm == 5"
+            [class.highOrLowColor]="point.alarm == 4 || point.alarm == 3">
                 <td>{{point.name}}</td>
                 <td>{{stringyfiedTypeOfPoint(point.type)}}</td>
                 <td>{{point.address}}</td>

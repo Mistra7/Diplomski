@@ -77,10 +77,8 @@ export class MainTableComponent implements OnInit {
     {
       this.pointService.connectToDCom().toPromise().then(
         (res: any) => {
-          console.log(Date.now())
           this.PointList = res.points as Array<BasePointItem>;
           this.ConfigList = res.configItems as Array<ConfigItem>;
-          console.log(this.PointList);
           this.connected = true;
           localStorage.setItem("connected", JSON.stringify(this.connected));
           this.updatePoints();
@@ -88,7 +86,7 @@ export class MainTableComponent implements OnInit {
       )
       .catch(
         err => {
-          alert(err);
+          console.log(err);
         }
       )
     }
@@ -115,7 +113,8 @@ export class MainTableComponent implements OnInit {
             })
           },
           err => {
-            console.log(err);
+            if(err.error == "ConnectionFailiure")
+              this.restartConnection();
           }
         )
       }
@@ -133,7 +132,8 @@ export class MainTableComponent implements OnInit {
                 this.updatePoint(res as BasePointItem);
               },
               err => {
-                console.log(err);
+                if(err.error == "ConnectionFailiure")
+                  this.restartConnection();
               }
             );
             p.secsSinceLastAcqu = 0;
@@ -145,7 +145,15 @@ export class MainTableComponent implements OnInit {
 
   getNotification(point: BasePointItem)
   {
-    this.updatePoint(point);
+    if(point == null)
+    {
+      this.restartConnection();
+    }
+    else
+    {
+      this.updatePoint(point);
+    }
+    
   }
 
   updatePoint(point: BasePointItem)
@@ -154,6 +162,7 @@ export class MainTableComponent implements OnInit {
       if(p.dataBaseId == point.dataBaseId){
         p.rawValue = point.rawValue;
         p.timestamp = point.timestamp;
+        p.alarm = point.alarm;
         if(p.type == PointType.ANALOG_INPUT || p.type == PointType.ANALOG_OUTPUT){
           p.eguValue = point.eguValue;
         }
@@ -182,5 +191,14 @@ export class MainTableComponent implements OnInit {
       p.acquPeriod = 0;
       p.secsSinceLastAcqu = 0;
     })
+  }
+
+  restartConnection()
+  {
+    localStorage.setItem("doAcquisiton", JSON.stringify(false));
+    this.PointList = [];
+    this.ConfigList = [];
+    localStorage.setItem("connected", JSON.stringify(false));
+    alert("Connection aborted! Trying to connect to dCom!")
   }
 }

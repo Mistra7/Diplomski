@@ -1,5 +1,14 @@
 .backgroundColor {
-    background-color: #e9eaea;
+    background-color: #e9eaea !important;
+}
+
+.abnormalColor {
+    background-color: red;
+}
+
+.highOrLowColor {
+    background-color: yellow;
+    fill-opacity: 0.5;
 }
 
 .wrapper {

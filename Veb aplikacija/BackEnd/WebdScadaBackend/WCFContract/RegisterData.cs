@@ -9,6 +9,7 @@ namespace WCFContract
 {
     public class RegisterData
     {
+        private AlarmType alarm;
         private PointType type;
         private ushort address;
         private ushort rawValue;
@@ -24,5 +25,6 @@ namespace WCFContract
         public ushort Address { get => address; set => address = value; }
         public PointType Type { get => type; set => type = value; }
         public DateTime Timestamp { get => timestamp; set => timestamp = value; }
+        public AlarmType Alarm { get => alarm; set => alarm = value; }
     }
 }

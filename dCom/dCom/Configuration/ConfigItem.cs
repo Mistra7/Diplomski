@@ -295,9 +295,56 @@ namespace dCom.Configuration
                 AcquisitionInterval = temp;
             }
 
-			ScaleFactor = 1;
-			Deviation = 0;
-        }
+			if(configurationParameters[10].Equals("#"))
+			{
+				ScaleFactor = 1;
+			}
+			else
+			{
+				Double.TryParse(configurationParameters[10], out doubleTemp);
+				ScaleFactor = doubleTemp;
+			}
+
+			if(configurationParameters[11].Equals("#"))
+			{
+				Deviation = 0;
+			}
+			else
+			{
+				Double.TryParse(configurationParameters[11], out doubleTemp);
+				Deviation = doubleTemp;
+			}
+
+			if(!configurationParameters[12].Equals("#"))
+			{
+				Double.TryParse(configurationParameters[12], out doubleTemp);
+				EGU_Max = doubleTemp;
+			}
+
+			if (!configurationParameters[13].Equals("#"))
+			{
+				Double.TryParse(configurationParameters[13], out doubleTemp);
+				EGU_Min = doubleTemp;
+			}
+
+			if(!configurationParameters[14].Equals("#"))
+			{
+				Int32.TryParse(configurationParameters[14], out temp);
+				AbnormalValue = (ushort)temp;
+			}
+
+			if (!configurationParameters[15].Equals("#"))
+			{
+				Double.TryParse(configurationParameters[15], out doubleTemp);
+				HighLimit = doubleTemp;
+			}
+
+			if (!configurationParameters[16].Equals("#"))
+			{
+				Double.TryParse(configurationParameters[16], out doubleTemp);
+				LowLimit = doubleTemp;
+			}
+		}
 
 		public ConfigItem() { }
 

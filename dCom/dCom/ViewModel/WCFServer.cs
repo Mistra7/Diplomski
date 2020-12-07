@@ -85,6 +85,7 @@ namespace dCom.ViewModel
 
                 var returnValue = new RegisterData()
                 {
+                    Alarm = pointToRead.Alarm,
                     Address = ((BasePointItem)pointToRead).Address,
                     Timestamp = pointToRead.Timestamp,
                     Type = pointToRead.ConfigItem.RegistryType,
@@ -120,6 +121,7 @@ namespace dCom.ViewModel
                 pointToWrite = storage.GetPoint(point);
                 var returnValue = new RegisterData()
                 {
+                    Alarm = pointToWrite.Alarm,
                     Timestamp = pointToWrite.Timestamp,
                     Type = pointToWrite.ConfigItem.RegistryType,
                     RawValue = pointToWrite.RawValue,
@@ -180,6 +182,7 @@ namespace dCom.ViewModel
                 {
                     returnValue.Add(new RegisterData()
                     {
+                        Alarm = p.Alarm,
                         Timestamp = p.Timestamp,
                         Address = p.Address,
                         RawValue = p.RawValue,

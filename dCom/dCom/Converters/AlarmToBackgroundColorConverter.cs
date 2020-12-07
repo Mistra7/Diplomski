@@ -16,9 +16,14 @@ namespace dCom.Converters
 			if (value != null && value is AlarmType)
 			{
 				AlarmType a = (AlarmType)value;
-				if(a != AlarmType.NO_ALARM && a != 0x00)
+				if(a == AlarmType.ABNORMAL_VALUE)
 				{
 					color = new SolidColorBrush(Colors.Red);
+					color.Opacity = 0.5;
+				}
+				else if(a == AlarmType.LOW_ALARM || a == AlarmType.HIGH_ALARM)
+				{
+					color = new SolidColorBrush(Colors.Yellow);
 					color.Opacity = 0.5;
 				}
 			}

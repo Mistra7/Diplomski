@@ -18,7 +18,6 @@ namespace WebdScadaBackend.Controllers
     [ApiController]
     public class PointController : ControllerBase
     {
-        private static Dictionary<int, PointItem> points = new Dictionary<int, PointItem>();
         private static WCFClient client = null;
         private PointContext _dataBase;
 
@@ -31,37 +30,44 @@ namespace WebdScadaBackend.Controllers
         [Route("Connect")]
         public async Task<Object> Connect()
         {
-            client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
+            try
+            {
+                client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
 
-            var pointsList = client.GetPoints();
+                var pointsList = client.GetPoints();
 
-            if(pointsList == null)
+                if (pointsList == null)
+                {
+                    return NotFound("ConnectionFailiure");
+                }
+                else
+                {
+                    PutPointsInDataBase(pointsList);
+                }
+
+                var configList = client.GetConfigItems();
+
+                if (configList == null)
+                {
+                    return NotFound("ConnectionFailiure");
+                }
+                else
+                {
+                    PutConfigsInDataBase(configList);
+                }
+
+                var Points = _dataBase.Points.ToList();
+
+                return new
+                {
+                    Points,
+                    ConfigItems = _dataBase.ConfigItems.ToArray()
+                };
+            }
+            catch
             {
                 return NotFound("ConnectionFailiure");
             }
-            else
-            {
-                PutPointsInDataBase(pointsList);
-            }
-
-            var configList = client.GetConfigItems();
-
-            if(configList == null)
-            {
-                return NotFound("ConnectionFailiure");
-            }
-            else
-            {
-                PutConfigsInDataBase(configList);
-            }
-
-            var Points = _dataBase.Points.ToList();
-
-            return new
-            {
-                Points,
-                ConfigItems = _dataBase.ConfigItems.ToArray()
-            }; //Ok(_dataBase.Points.ToArray());
         }
 
         [HttpGet]
@@ -83,33 +89,26 @@ namespace WebdScadaBackend.Controllers
                 if (point == null)
                     return BadRequest("Wrong point id");
 
-                try
-                {
-                    var newValue = client.ReadCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type });
+                var newValue = client.ReadCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type });
 
-                    if(newValue == null)
-                        return NotFound("Read Command Failed");
+                if(newValue == null)
+                    return NotFound("Read Command Failed");
 
-                    point.RawValue = newValue.RawValue;
-                    point.Timestamp = newValue.Timestamp;
-                    if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
-                        point.EguValue = newValue.EguValue;
-                    else
-                        point.State = newValue.State;
+                point.RawValue = newValue.RawValue;
+                point.Timestamp = newValue.Timestamp;
+                point.Alarm = newValue.Alarm;
+                if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
+                    point.EguValue = newValue.EguValue;
+                else
+                    point.State = newValue.State;
 
-                    _dataBase.SaveChanges();
-                }
-                catch
-                {
-                    return NotFound("ConnectionFailiure");
-                }
-
+                _dataBase.SaveChanges();
                  
                 return Ok(point);
             }
-            catch(Exception e)
+            catch
             {
-                return Problem(e.Message);
+                return NotFound("ConnectionFailiure");
             }
         }
 
@@ -123,32 +122,26 @@ namespace WebdScadaBackend.Controllers
                 if (point == null)
                     return BadRequest("Wrong point id");
 
-                try
-                {
-                    var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, (ushort)value);
+                var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, (ushort)value);
 
-                    if (newValue == null)
-                        return NotFound("Read Command Failed");
+                if (newValue == null)
+                    return NotFound("Read Command Failed");
 
-                    point.RawValue = newValue.RawValue;
-                    point.Timestamp = newValue.Timestamp;
-                    if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
-                        point.EguValue = newValue.EguValue;
-                    else
-                        point.State = newValue.State;
+                point.RawValue = newValue.RawValue;
+                point.Timestamp = newValue.Timestamp;
+                point.Alarm = newValue.Alarm;
+                if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
+                    point.EguValue = newValue.EguValue;
+                else
+                    point.State = newValue.State;
 
-                    _dataBase.SaveChanges();
-                }
-                catch
-                {
-                    return NotFound("ConnectionFailiure");
-                }
+                _dataBase.SaveChanges();
 
                 return Ok(point);
             }
-            catch(Exception e)
+            catch
             {
-                return Problem(e.Message);
+                return NotFound("ConnectionFailiure");
             }
         }
 
@@ -174,28 +167,10 @@ namespace WebdScadaBackend.Controllers
                 }
 
                 return Ok(UpdatePoints(points));
-                /*configItems.ForEach(ci =>
-                {
-                    for (int i = 0; i < ci.NumberOfRegisters; i++)
-                    {
-                        var point = client.ReadCommand(new PointIdentifier(ci.RegistryType, (ushort)(ci.StartAddress + i)));
-                        if (point == null)
-                        {
-                            points = null;
-                            return;
-                        }
-                        points.Add(point);
-                    }
-                });
-
-                if(points == null)
-                    return NotFound("Acqusition Command Failed");
-
-                return Ok(UpdatePoints(points));*/
             }
-            catch(Exception e)
+            catch
             {
-                return Problem(e.Message);
+                return NotFound("ConnectionFailiure");
             }
         }
 
@@ -242,7 +217,6 @@ namespace WebdScadaBackend.Controllers
             }
 
             _dataBase.SaveChanges();
-
         }
 
         private List<PointItem> UpdatePoints(List<RegisterData> registers)
@@ -254,6 +228,7 @@ namespace WebdScadaBackend.Controllers
             {
                 var point = points.Find(p => p.Address == register.Address && p.Type == register.Type);
 
+                point.Alarm = register.Alarm;
                 point.RawValue = register.RawValue;
                 point.Timestamp = register.Timestamp;
                 if (point.Type == PointType.ANALOG_INPUT || point.Type == PointType.ANALOG_OUTPUT)
@@ -294,8 +269,7 @@ namespace WebdScadaBackend.Controllers
 
             foreach(ConfigItem ci in list)
             {
-                var configItem = new ConfigItemData();
-                if ((configItem = configs.Find(c => c.StartAddress == ci.StartAddress && ci.RegistryType == c.RegistryType && ci.NumberOfRegisters == c.NumberOfRegisters)) == null)
+                if (configs.Find(c => c.StartAddress == ci.StartAddress && ci.RegistryType == c.RegistryType && ci.NumberOfRegisters == c.NumberOfRegisters) == null)
                     return false;
             }
 
