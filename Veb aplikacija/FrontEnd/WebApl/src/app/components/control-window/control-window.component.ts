@@ -43,7 +43,7 @@ export class ControlWindowComponent implements OnInit {
   }
 
   writeCommand(){
-    this.pointService.commandRegister(this.point.dataBaseId, this.commandedValue).subscribe(
+    this.pointService.commandRegister(this.point.pointId, this.commandedValue).subscribe(
       (res: any) => {
         this.notifyParent.emit(res as BasePointItem);
         this.commandedValue = 0;
@@ -51,6 +51,8 @@ export class ControlWindowComponent implements OnInit {
       err => {
         if(err.error = "ConnectionFailiure")
           this.notifyParent.emit(null);
+        else
+          console.log(err);
         this.commandedValue = 0;
         document.getElementById("closeModal").click();
       }
@@ -90,7 +92,7 @@ export class ControlWindowComponent implements OnInit {
 
   readCommand()
   {
-    this.pointService.readRegister(this.point.dataBaseId).subscribe(
+    this.pointService.readRegister(this.point.pointId).subscribe(
       (res : any) => {
         this.notifyParent.emit(res as BasePointItem);
       },
@@ -98,6 +100,8 @@ export class ControlWindowComponent implements OnInit {
       {
         if(err.error = "ConnectionFailiure")
           this.notifyParent.emit(null);
+        else
+          console.log(err);
         this.commandedValue = 0;
         document.getElementById("closeModal").click();
       }

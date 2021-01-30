@@ -9,13 +9,18 @@ namespace WebdScadaBackend.Models
 {
     public class ConfigItem : ConfigItemData
     {
-        private int dataBaseId;
+        private static int numberOfConfigs = 0;
+        private int id;
         private int secondsPassedSinceLastPoll;
 
-        public ConfigItem() : base() { }
+        public ConfigItem() : base() 
+        {
+            id = numberOfConfigs++;
+        }
 
-        [Key]
-        public int DataBaseId { get => dataBaseId; set => dataBaseId = value; }
+        
+
+        public int Id { get => id; set => id = value; }
         public int SecondsPassedSinceLastPoll { get => secondsPassedSinceLastPoll; set => secondsPassedSinceLastPoll = value; }
     }
 }

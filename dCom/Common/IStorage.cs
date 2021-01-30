@@ -32,7 +32,7 @@ namespace Common
         /// <returns>The list of poitns read from the storage.</returns>
 		List<IPoint> GetPoints(List<PointIdentifier> pointIds);
         List<IPoint> GetAllPoints();
-        IPoint GetPoint(PointIdentifier pointId);
+        IPoint GetPoint(int pointId);
         List<IPoint> GetPointsWithNewValues(List<PointIdentifier> pointIds);
     }
 }

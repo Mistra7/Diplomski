@@ -1,5 +1,4 @@
-﻿using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +15,7 @@ namespace WCFContract
         private double eguValue;
         private DateTime timestamp;
         private DState state;
+        private int pointId;
 
         public RegisterData() {}
 
@@ -26,5 +26,6 @@ namespace WCFContract
         public PointType Type { get => type; set => type = value; }
         public DateTime Timestamp { get => timestamp; set => timestamp = value; }
         public AlarmType Alarm { get => alarm; set => alarm = value; }
+        public int PointId { get => pointId; set => pointId = value; }
     }
 }

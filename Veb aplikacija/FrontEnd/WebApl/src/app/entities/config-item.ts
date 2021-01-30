@@ -5,7 +5,7 @@ export class ConfigItem {
     numberOfRegisters : number;
     startAddress : number;
     acquisitionInterval : number;
-    dataBaseId : number;
+    id : number;
     secondsPassedSinceLastPoll : number;
 
     constructor() {}

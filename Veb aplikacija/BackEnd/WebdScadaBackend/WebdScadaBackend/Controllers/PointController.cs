@@ -5,7 +5,6 @@ using System.Linq;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WCFContract;
@@ -19,11 +18,11 @@ namespace WebdScadaBackend.Controllers
     public class PointController : ControllerBase
     {
         private static WCFClient client = null;
-        private PointContext _dataBase;
+        private static Dictionary<int, PointData> Points = new Dictionary<int, PointData>();
+        private static Dictionary<int, ConfigItem> ConfigItems = new Dictionary<int, ConfigItem>();
 
-        public PointController(PointContext dataBase)
+        public PointController()
         {
-            this._dataBase = dataBase;
         }
 
         [HttpGet]
@@ -32,36 +31,33 @@ namespace WebdScadaBackend.Controllers
         {
             try
             {
-                client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
+                if(client == null)
+                    client = new WCFClient(new NetTcpBinding(), new EndpointAddress(new Uri("net.tcp://localhost:9999/Server")));
 
                 var pointsList = client.GetPoints();
 
                 if (pointsList == null)
                 {
+                    ResetVariables();
                     return NotFound("ConnectionFailiure");
                 }
-                else
-                {
-                    PutPointsInDataBase(pointsList);
-                }
+                
+                PutPointsInDictionary(pointsList);
 
                 var configList = client.GetConfigItems();
 
                 if (configList == null)
                 {
+                    ResetVariables();
                     return NotFound("ConnectionFailiure");
                 }
-                else
-                {
-                    PutConfigsInDataBase(configList);
-                }
 
-                var Points = _dataBase.Points.ToList();
+                PutConfigsInDictionary(configList);
 
                 return new
                 {
-                    Points,
-                    ConfigItems = _dataBase.ConfigItems.ToArray()
+                    Points = Points.Values.ToList(),
+                    ConfigItems = ConfigItems.Values.ToList()
                 };
             }
             catch
@@ -71,25 +67,16 @@ namespace WebdScadaBackend.Controllers
         }
 
         [HttpGet]
-        [Route("GetAllPoints")]
-        public async Task<Object> GetAllPoints()
-        {
-            var points = _dataBase.Points.ToList();
-
-            return points;
-        }
-
-        [HttpGet]
         [Route("ReadSingleRegister")]
         public async Task<Object> ReadSingleRegister(int pid)
         {
             try
             {
-                var point = _dataBase.Points.Find(pid);
+                var point = Points[pid];
                 if (point == null)
                     return BadRequest("Wrong point id");
 
-                var newValue = client.ReadCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type });
+                var newValue = client.ReadCommand(pid);
 
                 if(newValue == null)
                     return NotFound("Read Command Failed");
@@ -101,13 +88,12 @@ namespace WebdScadaBackend.Controllers
                     point.EguValue = newValue.EguValue;
                 else
                     point.State = newValue.State;
-
-                _dataBase.SaveChanges();
                  
                 return Ok(point);
             }
             catch
             {
+                ResetVariables();
                 return NotFound("ConnectionFailiure");
             }
         }
@@ -118,11 +104,11 @@ namespace WebdScadaBackend.Controllers
         {
             try
             {
-                var point = _dataBase.Points.Find(pid);
+                var point = Points[pid];
                 if (point == null)
                     return BadRequest("Wrong point id");
 
-                var newValue = client.WriteCommand(new PointIdentifier() { Address = point.Address, PointType = point.Type }, (ushort)value);
+                var newValue = client.WriteCommand(pid, (ushort)value);
 
                 if (newValue == null)
                     return NotFound("Read Command Failed");
@@ -135,12 +121,11 @@ namespace WebdScadaBackend.Controllers
                 else
                     point.State = newValue.State;
 
-                _dataBase.SaveChanges();
-
                 return Ok(point);
             }
             catch
             {
+                ResetVariables();
                 return NotFound("ConnectionFailiure");
             }
         }
@@ -151,15 +136,15 @@ namespace WebdScadaBackend.Controllers
         {
             try
             {
-                var pointIdentifiers = new List<PointIdentifier>();
+                var pointIds = new List<AcqusitionData>();
                 var configItems = new List<ConfigItem>();
-                var checkList = _dataBase.ConfigItems.ToList();
+                var checkList = ConfigItems.Values.ToList();
                 var points = new List<RegisterData>();
+                
+                identifiers.ForEach(i => configItems.Add(checkList.Find(ci => ci.Id == i)));
+                configItems.ForEach(ci => pointIds.Add(new AcqusitionData(ci.RegistryType, ci.StartAddress, ci.NumberOfRegisters)));
 
-                identifiers.ForEach(i => configItems.Add(checkList.Find(ci => ci.DataBaseId == i)));
-                configItems.ForEach(ci => pointIdentifiers.Add(new PointIdentifier(ci.RegistryType, ci.StartAddress)));
-
-                points = client.DoAcquisiton(pointIdentifiers);
+                points = client.DoAcquisiton(pointIds);
 
                 if(points == null)
                 {
@@ -170,37 +155,23 @@ namespace WebdScadaBackend.Controllers
             }
             catch
             {
+                ResetVariables();
                 return NotFound("ConnectionFailiure");
             }
         }
 
-        private void PutPointsInDataBase(List<PointData> points)
+        private void PutPointsInDictionary(List<PointData> points)
         {
-            if(_dataBase.Points.ToArray().Length != 0)
-            {
-                if (checkIfPointsListIsSame(points))
-                    return;
-                _dataBase.Points.RemoveRange(_dataBase.Points.ToArray());
-            }
-
+            Points = new Dictionary<int, PointData>();
             foreach(PointData point in points)
             {
-                PointItem newPoint = new PointItem(point);
-
-                _dataBase.Points.Add(newPoint);
+                Points.Add(point.PointId, point);
             }
-
-            _dataBase.SaveChanges();
         }
         
-        private void PutConfigsInDataBase(List<ConfigItemData> configItems)
+        private void PutConfigsInDictionary(List<ConfigItemData> configItems)
         {
-            if (_dataBase.ConfigItems.ToArray().Length != 0)
-            {
-                if (checkIfConfingListIsSame(configItems))
-                    return;
-                _dataBase.ConfigItems.RemoveRange(_dataBase.ConfigItems.ToArray());
-            }
+            ConfigItems = new Dictionary<int, ConfigItem>();
 
             foreach(ConfigItemData configItem in configItems)
             {
@@ -213,20 +184,17 @@ namespace WebdScadaBackend.Controllers
                     AcquisitionInterval = configItem.AcquisitionInterval
                 };
 
-                _dataBase.ConfigItems.Add(confItem);
+                ConfigItems.Add(confItem.Id ,confItem);
             }
-
-            _dataBase.SaveChanges();
         }
 
-        private List<PointItem> UpdatePoints(List<RegisterData> registers)
+        private List<PointData> UpdatePoints(List<RegisterData> registers)
         {
-            var points = _dataBase.Points.ToList();
-            var returnValue = new List<PointItem>();
+            var returnValue = new List<PointData>();
 
             foreach(RegisterData register in registers)
             {
-                var point = points.Find(p => p.Address == register.Address && p.Type == register.Type);
+                var point = Points[register.PointId];
 
                 point.Alarm = register.Alarm;
                 point.RawValue = register.RawValue;
@@ -238,42 +206,15 @@ namespace WebdScadaBackend.Controllers
 
                 returnValue.Add(point);
             }
-
-            _dataBase.SaveChangesAsync();
             
             return returnValue;
         }
 
-        private bool checkIfPointsListIsSame(List<PointData> points)
+        private void ResetVariables()
         {
-            var list = _dataBase.Points.ToList();
-            if (points.Count != list.Count)
-                return false;
-
-            foreach(PointItem pi in list)
-            {
-                if(points.Find(p => pi.Address == p.Address && pi.Type == p.Type) == null)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private bool checkIfConfingListIsSame(List<ConfigItemData> configs)
-        {
-            var list = _dataBase.ConfigItems.ToList();
-            if (configs.Count != list.Count)
-                return false;
-
-            foreach(ConfigItem ci in list)
-            {
-                if (configs.Find(c => c.StartAddress == ci.StartAddress && ci.RegistryType == c.RegistryType && ci.NumberOfRegisters == c.NumberOfRegisters) == null)
-                    return false;
-            }
-
-            return true;
+            client = null;
+            Points = new Dictionary<int, PointData>();
+            ConfigItems = new Dictionary<int, ConfigItem>();
         }
     }
 }

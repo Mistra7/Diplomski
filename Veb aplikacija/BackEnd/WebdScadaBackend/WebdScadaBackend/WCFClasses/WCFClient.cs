@@ -1,6 +1,4 @@
-﻿
-using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
@@ -17,11 +15,11 @@ namespace WebdScadaBackend.WCFClasses
             factory = this.CreateChannel();
         }
 
-        public List<RegisterData> DoAcquisiton(List<PointIdentifier> points)
+        public List<RegisterData> DoAcquisiton(List<AcqusitionData> pointIds)
         {
             try
             {
-                return factory.DoAcquisiton(points);
+                return factory.DoAcquisiton(pointIds);
             }
             catch
             {
@@ -53,11 +51,11 @@ namespace WebdScadaBackend.WCFClasses
             }
         }
 
-        public RegisterData ReadCommand(PointIdentifier point)
+        public RegisterData ReadCommand(int pointId)
         {
             try
             {
-                return factory.ReadCommand(point);
+                return factory.ReadCommand(pointId);
             }
             catch
             {
@@ -65,11 +63,11 @@ namespace WebdScadaBackend.WCFClasses
             }
         }
 
-        public RegisterData WriteCommand(PointIdentifier point, ushort value)
+        public RegisterData WriteCommand(int pointId, ushort value)
         {
             try
             {
-                return factory.WriteCommand(point, value);
+                return factory.WriteCommand(pointId, value);
             }
             catch
             {

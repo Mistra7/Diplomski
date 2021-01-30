@@ -9,7 +9,7 @@ export class PointService {
   readonly BaseURI = 'http://localhost:40000/api'
   constructor(private http: HttpClient) { }
 
-  connectToDCom() {
+  connectToAMS() {
     return this.http.get(this.BaseURI + "/Point/Connect");
   }
 
@@ -25,10 +25,6 @@ export class PointService {
 
   acqusitate(identifiers: Array<number>)
   {
-    //console.log(ident);
-    /*var data = {
-      identifiers : ident
-    }*/
     return this.http.post(this.BaseURI + "/Point/DoTheAcqusition", identifiers);
   }
 }

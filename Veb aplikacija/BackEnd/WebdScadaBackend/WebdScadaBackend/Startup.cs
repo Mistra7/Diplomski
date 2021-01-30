@@ -34,10 +34,6 @@ namespace WebdScadaBackend
             services.Configure<ApplicationSettings>(Configuration.GetSection("ApplicationSettings"));
 
             services.AddMvc(option => option.EnableEndpointRouting = false).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            
-            services.AddDbContext<PointContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection"))
-            );
 
             services.AddCors();
 
@@ -90,20 +86,6 @@ namespace WebdScadaBackend
             app.UseAuthentication();
 
             app.UseMvc();
-
-            /*if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });*/
         }
     }
 }

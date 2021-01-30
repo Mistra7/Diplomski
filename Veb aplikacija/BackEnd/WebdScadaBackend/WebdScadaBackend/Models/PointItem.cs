@@ -1,5 +1,4 @@
-﻿using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,7 +18,6 @@ namespace WebdScadaBackend.Models
 		private double commandedValue;
 		protected AlarmType alarm;
 		protected int pointId;
-		private int dataBaseId;
 		private ushort minValue;
 		private ushort maxValue;
 		private double? eguValue;
@@ -51,8 +49,6 @@ namespace WebdScadaBackend.Models
 		public double CommandedValue { get => commandedValue; set => commandedValue = value; }
 		public AlarmType Alarm { get => alarm; set => alarm = value; }
 		public int PointId { get => pointId; set => pointId = value; }
-		[Key]
-		public int DataBaseId { get => dataBaseId; set => dataBaseId = value; }
 		public ushort MinValue { get => minValue; set => minValue = value; }
 		public ushort MaxValue { get => maxValue; set => maxValue = value; }
 		public double? EguValue { get => eguValue; set => eguValue = value; }

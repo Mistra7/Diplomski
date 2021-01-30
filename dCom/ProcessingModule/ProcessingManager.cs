@@ -120,8 +120,10 @@ namespace ProcessingModule
                 ProcessDigitalPoint(points.First() as IDigitalPoint, newValue);
             }
 
+            
+
             if (Transactions.Exists(t => t.Address == pointAddress))
-                Transactions.Find(t => t.Address == pointAddress).Finished = true;
+                Transactions.First(p => p.Address == pointAddress && p.Finished == false).Finished = true;
         }
 
         /// <summary>

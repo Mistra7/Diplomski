@@ -20,9 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Common">
-      <HintPath>..\..\..\..\dCom\Common\bin\Debug\Common.dll</HintPath>
-    </Reference>
     <Reference Include="WCFContract">
       <HintPath>..\WCFContract\bin\Debug\WCFContract.dll</HintPath>
     </Reference>

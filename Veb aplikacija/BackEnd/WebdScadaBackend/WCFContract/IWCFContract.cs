@@ -1,5 +1,4 @@
-﻿using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
@@ -16,10 +15,10 @@ namespace WCFContract
         [OperationContract]
         List<ConfigItemData> GetConfigItems();
         [OperationContract]
-        RegisterData ReadCommand(PointIdentifier point);
+        RegisterData ReadCommand(int pointId);
         [OperationContract]
-        RegisterData WriteCommand(PointIdentifier point, ushort value);
+        RegisterData WriteCommand(int pointId, ushort value);
         [OperationContract]
-        List<RegisterData> DoAcquisiton(List<PointIdentifier> points);
+        List<RegisterData> DoAcquisiton(List<AcqusitionData> pointId);
     }
 }

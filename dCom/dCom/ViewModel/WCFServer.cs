@@ -45,9 +45,9 @@ namespace dCom.ViewModel
             {
                 var basePoint = (BasePointItem)point;
                 var newPoint = new PointData() { PointId = point.PointId, RawValue = point.RawValue, Address = basePoint.Address,
-                                                Type = basePoint.Type, Alarm = basePoint.Alarm, CommandedValue = basePoint.CommandedValue,
+                                                Type = (WCFContract.PointType)basePoint.Type, Alarm = (WCFContract.AlarmType)basePoint.Alarm, CommandedValue = basePoint.CommandedValue,
                                                 Name = basePoint.Name, Timestamp = basePoint.Timestamp};
-                if(basePoint.Type == PointType.ANALOG_INPUT || basePoint.Type == PointType.ANALOG_OUTPUT)
+                if(basePoint.Type == Common.PointType.ANALOG_INPUT || basePoint.Type == Common.PointType.ANALOG_OUTPUT)
                 {
                     newPoint.EguValue = ((AnalogBase)basePoint).EguValue;
                     newPoint.MinValue = basePoint.ConfigItem.MinValue;
@@ -55,7 +55,7 @@ namespace dCom.ViewModel
                 }
                 else
                 {
-                    newPoint.State = ((DigitalBase)basePoint).State;
+                    newPoint.State = (WCFContract.DState)((DigitalBase)basePoint).State;
                 }
 
                 points.Add(newPoint);
@@ -64,34 +64,35 @@ namespace dCom.ViewModel
             return points;
         }
 
-        public RegisterData ReadCommand(PointIdentifier point)
+        public RegisterData ReadCommand(int point)
         {
-            var pointToRead = storage.GetPoint(point);
+            var pointToRead = storage.GetPoint(point) as BasePointItem;
             Transaction trans = null;
 
             try
             {
                 ushort tranId = configuration.GetTransactionId();
-                processingManager.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
+                processingManager.Transactions.Add(trans = new Transaction(tranId, pointToRead.Address, false));
 
-                processingManager.ExecuteReadCommand(pointToRead.ConfigItem, tranId , configuration.UnitAddress, point.Address, 1);
+                processingManager.ExecuteReadCommand(pointToRead.ConfigItem, tranId , configuration.UnitAddress, pointToRead.Address, 1);
 
                 while(!(trans = processingManager.Transactions.Find(t => t.TransactionId == tranId)).Finished)
-                    Thread.Sleep(25);
+                    Thread.Sleep(10);
 
                 processingManager.Transactions.Remove(trans);
 
-                pointToRead = storage.GetPoint(point);
+                pointToRead = storage.GetPoint(point) as BasePointItem;
 
                 var returnValue = new RegisterData()
                 {
-                    Alarm = pointToRead.Alarm,
-                    Address = ((BasePointItem)pointToRead).Address,
+                    PointId = pointToRead.PointId,
+                    Alarm = (WCFContract.AlarmType)pointToRead.Alarm,
+                    Address = pointToRead.Address,
                     Timestamp = pointToRead.Timestamp,
-                    Type = pointToRead.ConfigItem.RegistryType,
+                    Type = (WCFContract.PointType)pointToRead.ConfigItem.RegistryType,
                     RawValue = pointToRead.RawValue,
-                    EguValue = pointToRead.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToRead.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToRead).EguValue : 0,
-                    State = pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_INPUT || pointToRead.ConfigItem.RegistryType == PointType.DIGITAL_OUTPUT ? ((DigitalBase)pointToRead).State : 0 
+                    EguValue = pointToRead.ConfigItem.RegistryType == Common.PointType.ANALOG_INPUT || pointToRead.ConfigItem.RegistryType == Common.PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToRead).EguValue : 0,
+                    State = pointToRead.ConfigItem.RegistryType == Common.PointType.DIGITAL_INPUT || pointToRead.ConfigItem.RegistryType == Common.PointType.DIGITAL_OUTPUT ? (WCFContract.DState)((DigitalBase)pointToRead).State : 0 
                 };
 
                 return returnValue;
@@ -103,30 +104,31 @@ namespace dCom.ViewModel
             }
         }
 
-        public RegisterData WriteCommand(PointIdentifier point, ushort value)
+        public RegisterData WriteCommand(int point, ushort value)
         {
-            var pointToWrite = storage.GetPoint(point);
+            var pointToWrite = storage.GetPoint(point) as BasePointItem;
             Transaction trans = null;
             try
             {
                 ushort tranId = configuration.GetTransactionId();
-                processingManager.Transactions.Add(trans = new Transaction(tranId, point.Address, false));
-                processingManager.ExecuteWriteCommand(pointToWrite.ConfigItem, tranId, configuration.UnitAddress, point.Address, (int)value);
+                processingManager.Transactions.Add(trans = new Transaction(tranId, pointToWrite.Address, false));
+                processingManager.ExecuteWriteCommand(pointToWrite.ConfigItem, tranId, configuration.UnitAddress, pointToWrite.Address, (int)value);
 
                 while (!(trans = processingManager.Transactions.Find(t => t.TransactionId == tranId)).Finished)
-                    Thread.Sleep(25);
+                    Thread.Sleep(10);
 
                 processingManager.Transactions.Remove(trans);
 
-                pointToWrite = storage.GetPoint(point);
+                pointToWrite = storage.GetPoint(point) as BasePointItem;
                 var returnValue = new RegisterData()
                 {
-                    Alarm = pointToWrite.Alarm,
+                    PointId = pointToWrite.PointId,
+                    Alarm = (WCFContract.AlarmType)pointToWrite.Alarm,
                     Timestamp = pointToWrite.Timestamp,
-                    Type = pointToWrite.ConfigItem.RegistryType,
+                    Type = (WCFContract.PointType)pointToWrite.ConfigItem.RegistryType,
                     RawValue = pointToWrite.RawValue,
-                    EguValue = pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_INPUT || pointToWrite.ConfigItem.RegistryType == PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToWrite).EguValue : 0,
-                    State = pointToWrite.ConfigItem.RegistryType == PointType.DIGITAL_INPUT || pointToWrite.ConfigItem.RegistryType == PointType.DIGITAL_OUTPUT ? ((DigitalBase)pointToWrite).State : 0
+                    EguValue = pointToWrite.ConfigItem.RegistryType == Common.PointType.ANALOG_INPUT || pointToWrite.ConfigItem.RegistryType == Common.PointType.ANALOG_OUTPUT ? ((AnalogBase)pointToWrite).EguValue : 0,
+                    State = pointToWrite.ConfigItem.RegistryType == Common.PointType.DIGITAL_INPUT || pointToWrite.ConfigItem.RegistryType == Common.PointType.DIGITAL_OUTPUT ? (WCFContract.DState)((DigitalBase)pointToWrite).State : 0
                 };
                 return returnValue;
             }
@@ -137,7 +139,7 @@ namespace dCom.ViewModel
             }
         }
 
-        public List<RegisterData> DoAcquisiton(List<PointIdentifier> points)
+        public List<RegisterData> DoAcquisiton(List<AcqusitionData> pointIds)
         {
             try
             {
@@ -145,6 +147,8 @@ namespace dCom.ViewModel
                 var readPointIdentifiers = new List<PointIdentifier>();
                 var checkData = new Dictionary<ushort, ushort>();
                 var transIds = new List<ushort>();
+                var points = new List<PointIdentifier>();
+                pointIds.ForEach(p => points.Add(new PointIdentifier((Common.PointType)p.PointType, p.StartAddress)));
                 foreach (PointIdentifier point in points)
                 {
                     var transId = configuration.GetTransactionId();
@@ -182,13 +186,14 @@ namespace dCom.ViewModel
                 {
                     returnValue.Add(new RegisterData()
                     {
-                        Alarm = p.Alarm,
+                        PointId = p.PointId,
+                        Alarm = (WCFContract.AlarmType)p.Alarm,
                         Timestamp = p.Timestamp,
                         Address = p.Address,
                         RawValue = p.RawValue,
-                        Type = p.Type,
-                        EguValue = p.Type == PointType.ANALOG_INPUT || p.Type == PointType.ANALOG_OUTPUT ? ((AnalogBase)p).EguValue : 0,
-                        State = p.Type == PointType.DIGITAL_INPUT || p.Type == PointType.DIGITAL_OUTPUT ? ((DigitalBase)p).State : 0
+                        Type = (WCFContract.PointType)p.Type,
+                        EguValue = p.Type == Common.PointType.ANALOG_INPUT || p.Type == Common.PointType.ANALOG_OUTPUT ? ((AnalogBase)p).EguValue : 0,
+                        State = p.Type == Common.PointType.DIGITAL_INPUT || p.Type == Common.PointType.DIGITAL_OUTPUT ? (WCFContract.DState)((DigitalBase)p).State : 0
                     });
                 });
 
@@ -216,7 +221,7 @@ namespace dCom.ViewModel
                 {
                     AcquisitionInterval = ci.AcquisitionInterval,
                     NumberOfRegisters = ci.NumberOfRegisters,
-                    RegistryType = ci.RegistryType,
+                    RegistryType = (WCFContract.PointType)ci.RegistryType,
                     StartAddress = ci.StartAddress
                 }));
 

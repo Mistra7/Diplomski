@@ -75,8 +75,9 @@ export class MainTableComponent implements OnInit {
     this.connected = JSON.parse(localStorage.getItem("connected"));
     if(!this.connected)
     {
-      this.pointService.connectToDCom().toPromise().then(
+      this.pointService.connectToAMS().toPromise().then(
         (res: any) => {
+          console.log(res);
           this.PointList = res.points as Array<BasePointItem>;
           this.ConfigList = res.configItems as Array<ConfigItem>;
           this.connected = true;
@@ -99,7 +100,7 @@ export class MainTableComponent implements OnInit {
       this.ConfigList.forEach(c => {
         ++c.secondsPassedSinceLastPoll;
         if(c.acquisitionInterval > 0 && c.secondsPassedSinceLastPoll >= c.acquisitionInterval){
-          identifiers.push(c.dataBaseId);
+          identifiers.push(c.id);
           c.secondsPassedSinceLastPoll = 0;
         }
       });
@@ -115,6 +116,10 @@ export class MainTableComponent implements OnInit {
           err => {
             if(err.error == "ConnectionFailiure")
               this.restartConnection();
+            else
+            {
+              console.log(err);
+            }
           }
         )
       }
@@ -127,7 +132,7 @@ export class MainTableComponent implements OnInit {
           ++p.secsSinceLastAcqu;
           if(p.secsSinceLastAcqu >= p.acquPeriod)
           {
-            this.pointService.readRegister(p.dataBaseId).subscribe(
+            this.pointService.readRegister(p.pointId).subscribe(
               res => {
                 this.updatePoint(res as BasePointItem);
               },
@@ -159,7 +164,7 @@ export class MainTableComponent implements OnInit {
   updatePoint(point: BasePointItem)
   {
     this.PointList.forEach(p => {
-      if(p.dataBaseId == point.dataBaseId){
+      if(p.pointId == point.pointId){
         p.rawValue = point.rawValue;
         p.timestamp = point.timestamp;
         p.alarm = point.alarm;

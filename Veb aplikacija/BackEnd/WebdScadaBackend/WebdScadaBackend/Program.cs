@@ -17,21 +17,6 @@ namespace WebdScadaBackend
         public static void Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
-            
-            using(var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                
-                try
-                {
-                    var context = services.GetRequiredService<PointContext>();
-                    DbIni.Initialize(context);
-                }
-                catch
-                {
-
-                }
-            }
 
             host.Run();
         }

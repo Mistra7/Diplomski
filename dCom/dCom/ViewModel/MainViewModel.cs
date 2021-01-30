@@ -154,16 +154,16 @@ namespace dCom.ViewModel
 		{
 			switch (c.RegistryType)
 			{
-				case PointType.DIGITAL_INPUT:
+				case Common.PointType.DIGITAL_INPUT:
 					return new DigitalInput(c, processingManager, this, configuration, i);
 
-				case PointType.DIGITAL_OUTPUT:
+				case Common.PointType.DIGITAL_OUTPUT:
 					return new DigitalOutput(c, processingManager, this, configuration, i);
 
-				case PointType.ANALOG_INPUT:
+				case Common.PointType.ANALOG_INPUT:
 					return new AnalaogInput(c, processingManager, this, configuration, i);
 
-				case PointType.ANALOG_OUTPUT:
+				case Common.PointType.ANALOG_OUTPUT:
 					return new AnalogOutput(c, processingManager, this, configuration, i);
 
 				default:
@@ -283,9 +283,9 @@ namespace dCom.ViewModel
 			return pointsCache.Values.ToList();
 		}
 
-		public IPoint GetPoint(PointIdentifier pointId)
+		public IPoint GetPoint(int pointId)
 		{
-			var points = Points.Where(p => pointId.Address == p.Address && pointId.PointType == p.Type).ToList();
+			var points = Points.Where(p => pointId == p.PointId).ToList();
 
 			return points[0];
 		}
