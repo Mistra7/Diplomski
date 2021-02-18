@@ -79,7 +79,9 @@ namespace WebdScadaBackend.Controllers
                 var newValue = client.ReadCommand(pid);
 
                 if(newValue == null)
+                {
                     return NotFound("Read Command Failed");
+                }
 
                 point.RawValue = newValue.RawValue;
                 point.Timestamp = newValue.Timestamp;
@@ -107,6 +109,12 @@ namespace WebdScadaBackend.Controllers
                 var point = Points[pid];
                 if (point == null)
                     return BadRequest("Wrong point id");
+
+                if (point.Type != PointType.ANALOG_OUTPUT || point.Type != PointType.DIGITAL_OUTPUT)
+                    return BadRequest("Can not write INPUT registers!");
+
+                if (point.MaxValue < value || point.MinValue > value)
+                    return BadRequest("Sent value is not in acceptable range");
 
                 var newValue = client.WriteCommand(pid, (ushort)value);
 

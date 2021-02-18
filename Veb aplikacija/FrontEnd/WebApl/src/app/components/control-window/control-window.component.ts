@@ -49,7 +49,7 @@ export class ControlWindowComponent implements OnInit {
         this.commandedValue = 0;
       },
       err => {
-        if(err.error = "ConnectionFailiure")
+        if(err.error == "ConnectionFailiure" || err.error == "Wrong point id")
           this.notifyParent.emit(null);
         else
           console.log(err);
@@ -98,7 +98,7 @@ export class ControlWindowComponent implements OnInit {
       },
       err => 
       {
-        if(err.error = "ConnectionFailiure")
+        if(err.error == "ConnectionFailiure" || err.error == "Wrong point id")
           this.notifyParent.emit(null);
         else
           console.log(err);
